@@ -1,4 +1,4 @@
-const CATALOG_VERSION = 2;
+const CATALOG_VERSION = 3;
 
 const SERVICES = [
   // Cortes

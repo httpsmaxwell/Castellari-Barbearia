@@ -570,9 +570,12 @@
     let currentStep = 1;
 
     function scrollToActiveStep(stepNum) {
+      if (!stepNum || stepNum === 1) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       setTimeout(() => {
-        const stepSection = $(`[data-booking-step="${stepNum || currentStep}"]`);
-        const targetEl = stepSection || $(".booking-stepper") || $("#booking-form");
+        const targetEl = $(".booking-stepper") || $("#booking-form");
         if (!targetEl) return;
         const header = $(".site-header");
         const offset = (header ? header.offsetHeight : 56) + 12;
