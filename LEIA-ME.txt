@@ -10,9 +10,10 @@ Páginas:
 - agendar.html    Prévia interativa de agendamento e interesse em plano
 
 Arquivos compartilhados:
-- castellari.css  Identidade visual, temas claro/escuro e responsividade
-- castellari.js   Dados do protótipo e interações de interface
-- check.js        Arquivo antigo mantido no diretório; as páginas atuais não o carregam
+- castellari.css       Identidade visual, temas claro/escuro e responsividade
+- castellari-data.js   Dados do protótipo (serviços, planos e equipe)
+- castellari.js        Interações de interface e fluxo de agendamento
+- check.js             Arquivo antigo mantido no diretório; as páginas atuais não o carregam
 
 Como visualizar/publicar:
 1. Mantenha estes arquivos juntos.
@@ -22,4 +23,4 @@ A versão atual não usa backend nem Firebase. O agendamento é uma demonstraç�
 
 Preços, benefícios, vagas, nomes, especialidades e horários foram preservados do protótipo e precisam ser confirmados pela barbearia antes de usar o site como canal oficial. Ainda não foram fornecidos logotipo oficial, fotos da unidade, endereço completo ou contato público; o monograma tipográfico é provisório.
 
-O projeto não exige build. A tipografia Bodoni Moda e Manrope é carregada do Google Fonts, com fontes locais de fallback.
+O projeto não exige build. A tipografia Lora e Manrope é carregada do Google Fonts, com fontes locais de fallback.

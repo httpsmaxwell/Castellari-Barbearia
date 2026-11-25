@@ -13,7 +13,8 @@ Site multipágina para apresentar a proposta visual e os principais fluxos da Ba
 ## Estrutura compartilhada
 
 - castellari.css — identidade visual, temas e responsividade
-- castellari.js — dados do protótipo e interações
+- castellari-data.js — catálogo demonstrativo de serviços, planos e equipe
+- castellari.js — interações de interface, filtros e fluxo de agendamento
 
 Não há etapa de build. As páginas podem ser abertas diretamente ou publicadas como site estático.
 
@@ -23,4 +24,4 @@ A versão atual não usa backend nem Firebase. Os horários são ilustrativos; o
 
 Preços, benefícios, vagas, nomes, especialidades e horários foram preservados do protótipo e precisam ser confirmados pela barbearia antes da publicação oficial. Ainda não há logotipo, fotos, endereço completo ou contato público confirmados; o monograma tipográfico é provisório.
 
-A tipografia Bodoni Moda e Manrope é carregada do Google Fonts, com fontes de fallback.
+A tipografia Lora e Manrope é carregada do Google Fonts, com fontes de fallback.
