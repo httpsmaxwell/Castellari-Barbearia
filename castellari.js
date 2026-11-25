@@ -569,13 +569,17 @@
 
     let currentStep = 1;
 
-    function scrollToActiveStep() {
-      const targetEl = $(".booking-stepper") || $("#booking-form");
-      if (!targetEl) return;
-      const header = $(".site-header");
-      const offset = (header ? header.offsetHeight : 60) + 8;
-      const top = targetEl.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    function scrollToActiveStep(stepNum) {
+      setTimeout(() => {
+        const stepSection = $(`[data-booking-step="${stepNum || currentStep}"]`);
+        const targetEl = stepSection || $(".booking-stepper") || $("#booking-form");
+        if (!targetEl) return;
+        const header = $(".site-header");
+        const offset = (header ? header.offsetHeight : 56) + 12;
+        const rect = targetEl.getBoundingClientRect();
+        const top = rect.top + (window.pageYOffset || document.documentElement.scrollTop) - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      }, 60);
     }
 
     const barberSelect = $("#booking-barber");
@@ -628,7 +632,7 @@
       });
 
       if (scroll) {
-        scrollToActiveStep();
+        scrollToActiveStep(currentStep);
       }
 
       updateSummary();
@@ -1042,6 +1046,8 @@
     renderCatalog();
     renderPlans();
     renderTeam();
+    // Dispara evento para que o initBooking (se ativo) re-renderize catálogo e barbeiros
+    window.dispatchEvent(new CustomEvent("castellari:catalog-updated"));
   }
 
   async function syncWithFirebase(api) {
