@@ -1,0 +1,25 @@
+BARBEARIA CASTELLARI — PROTÓTIPO DE APRESENTAÇÃO
+
+Site estático multipágina para apresentar a proposta visual e os principais fluxos da Barbearia Castellari.
+
+Páginas:
+- index.html      Apresentação da barbearia e destaques
+- servicos.html   Catálogo com busca e filtros por categoria
+- planos.html     Clube Castellari e planos mensais
+- equipe.html     Profissionais da unidade
+- agendar.html    Prévia interativa de agendamento e interesse em plano
+
+Arquivos compartilhados:
+- castellari.css  Identidade visual, temas claro/escuro e responsividade
+- castellari.js   Dados do protótipo e interações de interface
+- check.js        Arquivo antigo mantido no diretório; as páginas atuais não o carregam
+
+Como visualizar/publicar:
+1. Mantenha estes arquivos juntos.
+2. Abra index.html ou publique a pasta como site estático no Netlify.
+
+A versão atual não usa backend nem Firebase. O agendamento é uma demonstração: horários são exemplos, os dados de contato não são enviados nem salvos e nenhuma reserva é criada. A conexão com Firebase ficará para uma etapa posterior.
+
+Preços, benefícios, vagas, nomes, especialidades e horários foram preservados do protótipo e precisam ser confirmados pela barbearia antes de usar o site como canal oficial. Ainda não foram fornecidos logotipo oficial, fotos da unidade, endereço completo ou contato público; o monograma tipográfico é provisório.
+
+O projeto não exige build. A tipografia Bodoni Moda e Manrope é carregada do Google Fonts, com fontes locais de fallback.
