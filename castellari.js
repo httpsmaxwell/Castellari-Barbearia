@@ -238,12 +238,21 @@
     if (!grid) return;
     const people = BARBERS.filter((person) => person.id !== "sem-preferencia");
     grid.innerHTML = people.length
-      ? people.map((person) =>
-          '<a class="team-card" href="agendar.html?barber=' + encodeURIComponent(person.id) + '">' +
-          '<span class="team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + "</span>" +
-          "<h3>" + escapeHTML(person.name) + "</h3><p>" + escapeHTML(person.role) + "</p>" +
-          '<span class="text-link">Agendar com ' + escapeHTML(person.name.split(" ")[0]) + ' <span aria-hidden="true">→</span></span></a>'
-        ).join("")
+      ? people.map((person) => {
+          const photoHtml = person.photo
+            ? '<img class="team-photo" src="' + escapeHTML(person.photo) + '" alt="' + escapeHTML(person.name) + '" loading="lazy">'
+            : '<span class="team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + "</span>";
+          const badgeHtml = person.featured
+            ? '<span class="team-card-badge">★ Destaque</span>'
+            : "";
+          return (
+            '<a class="team-card" href="agendar.html?barber=' + encodeURIComponent(person.id) + '">' +
+            badgeHtml +
+            '<div class="team-photo-wrap">' + photoHtml + "</div>" +
+            "<h3>" + escapeHTML(person.name) + "</h3><p>" + escapeHTML(person.role) + "</p>" +
+            '<span class="text-link">Agendar com ' + escapeHTML(person.name.split(" ")[0]) + ' <span aria-hidden="true">→</span></span></a>'
+          );
+        }).join("")
       : '<p class="empty-state">Nenhum profissional disponível.</p>';
     grid.setAttribute("aria-busy", "false");
   }
@@ -262,9 +271,17 @@
     if (team) {
       const people = BARBERS.filter((person) => person.id !== "sem-preferencia").slice(0, 3);
       team.innerHTML =
-        people.map((person) =>
-          '<a class="home-team-item" href="agendar.html?barber=' + encodeURIComponent(person.id) + '"><span class="home-team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + "</span><span><strong>" + escapeHTML(person.name) + "</strong><br>" + escapeHTML(person.role) + '</span><span class="text-link">Agendar <span aria-hidden="true">→</span></span></a>'
-        ).join("") || '<p class="empty-state">Nenhum profissional disponível.</p>';
+        people.map((person) => {
+          const photoHtml = person.photo
+            ? '<img class="home-team-photo" src="' + escapeHTML(person.photo) + '" alt="' + escapeHTML(person.name) + '">'
+            : '<span class="home-team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + "</span>";
+          return (
+            '<a class="home-team-item" href="agendar.html?barber=' + encodeURIComponent(person.id) + '">' +
+            photoHtml +
+            "<span><strong>" + escapeHTML(person.name) + "</strong><br>" + escapeHTML(person.role) + "</span>" +
+            '<span class="text-link">Agendar <span aria-hidden="true">→</span></span></a>'
+          );
+        }).join("") || '<p class="empty-state">Nenhum profissional disponível.</p>';
       team.setAttribute("aria-busy", "false");
     }
   }
@@ -513,9 +530,16 @@
       if (!barbersGrid) return;
       barbersGrid.innerHTML = BARBERS.map((b) => {
         const isSel = barberSelect.value === b.id;
+        const photoHtml = b.photo
+          ? '<img class="barber-card-photo" src="' + escapeHTML(b.photo) + '" alt="' + escapeHTML(b.name) + '" loading="lazy">'
+          : '<span class="barber-card-monogram" aria-hidden="true">' + escapeHTML(b.initials || "★") + "</span>";
+        const badgeHtml = b.featured
+          ? '<span class="barber-card-badge">★ Destaque</span>'
+          : "";
         return (
           '<button type="button" class="barber-choice-card ' + (isSel ? "is-selected" : "") + '" data-barber-choice="' + escapeHTML(b.id) + '">' +
-          '<span class="barber-card-monogram" aria-hidden="true">' + escapeHTML(b.initials || initials(b.name)) + "</span>" +
+          badgeHtml +
+          '<div class="barber-card-avatar-wrap">' + photoHtml + "</div>" +
           '<div class="barber-card-info">' +
           "<strong>" + escapeHTML(b.name) + "</strong>" +
           "<span>" + escapeHTML(b.role) + "</span>" +

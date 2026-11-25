@@ -103,13 +103,13 @@ const PLANS = [
 ];
 
 const BARBERS = [
-  { id: 'raquel', name: 'Raquel', initials: 'RQ', featured: true, role: 'Master Barber' },
-  { id: 'lucas', name: 'Lucas', initials: 'LC', featured: false, role: 'Barbeiro Clássico' },
-  { id: 'felipe', name: 'Felipe', initials: 'FL', featured: false, role: 'Especialista Barba' },
-  { id: 'ana-clara', name: 'Ana Clara', initials: 'AC', featured: false, role: 'Visagismo & Corte' },
-  { id: 'lucas-alfaia', name: 'Lucas Alfaia', initials: 'LA', featured: false, role: 'Degradê & Acabamento' },
-  { id: 'gabriel', name: 'Gabriel', initials: 'GB', featured: false, role: 'Barbeiro' },
-  { id: 'sem-preferencia', name: 'Sem preferência', initials: '★', featured: false, role: 'Primeiro disponível' },
+  { id: 'raquel', name: 'Raquel', initials: 'RQ', featured: true, role: 'Master Barber', photo: 'img/equipe/raquel.jpg' },
+  { id: 'lucas', name: 'Lucas', initials: 'LC', featured: false, role: 'Barbeiro Clássico', photo: 'img/equipe/lucas.jpg' },
+  { id: 'felipe', name: 'Felipe', initials: 'FL', featured: false, role: 'Especialista Barba', photo: 'img/equipe/felipe.jpg' },
+  { id: 'ana-clara', name: 'Ana Clara', initials: 'AC', featured: false, role: 'Visagismo & Corte', photo: 'img/equipe/ana-clara.jpg' },
+  { id: 'lucas-alfaia', name: 'Lucas Alfaia', initials: 'LA', featured: false, role: 'Degradê & Acabamento', photo: 'img/equipe/lucas-alfaia.jpg' },
+  { id: 'gabriel', name: 'Gabriel', initials: 'GB', featured: false, role: 'Barbeiro', photo: 'img/equipe/gabriel.jpg' },
+  { id: 'sem-preferencia', name: 'Sem preferência', initials: '★', featured: false, role: 'Primeiro disponível', photo: null },
 ];
 
 window.CastellariData = { SERVICES, PLANS, BARBERS };
