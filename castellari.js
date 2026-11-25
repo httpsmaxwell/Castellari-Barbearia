@@ -457,15 +457,44 @@
     };
     updateSelectedCount();
 
-    function setStepper(activeStep) {
+    let currentStep = 1;
+
+    function goToStep(stepNumber, scroll = true) {
+      const target = Math.max(1, Math.min(4, stepNumber));
+      if (target > 1 && selected.size === 0) {
+        $("#booking-error").hidden = false;
+        $("#booking-error").textContent = "Escolha pelo menos um serviço antes de avançar.";
+        currentStep = 1;
+      } else if (target === 4 && (!selectedDay || !selectedTime)) {
+        $("#booking-error").hidden = false;
+        $("#booking-error").textContent = "Escolha a data e o horário antes de avançar.";
+        currentStep = 3;
+      } else {
+        $("#booking-error").hidden = true;
+        currentStep = target;
+      }
+
+      $$("[data-booking-step]").forEach((block) => {
+        const step = Number(block.dataset.bookingStep);
+        block.hidden = step !== currentStep;
+      });
+
       $$("[data-step-indicator]").forEach((item) => {
         const number = Number(item.dataset.stepIndicator);
-        item.classList.toggle("is-complete", number < activeStep);
-        if (number === activeStep) item.setAttribute("aria-current", "step");
+        item.classList.toggle("is-complete", number < currentStep);
+        if (number === currentStep) item.setAttribute("aria-current", "step");
         else item.removeAttribute("aria-current");
       });
+
+      if (scroll) {
+        const formEl = $("#booking-form");
+        if (formEl) {
+          formEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      updateSummary();
     }
-    setStepper(selected.size ? (selectedDay && selectedTime ? 4 : 2) : 1);
 
     const barberSelect = $("#booking-barber");
     barberSelect.innerHTML = BARBERS.map((person) =>
@@ -477,6 +506,64 @@
       barberSelect.value = saved.barberId;
     } else {
       barberSelect.value = "sem-preferencia";
+    }
+
+    const barbersGrid = $("#booking-barbers-grid");
+    function renderBarbersGrid() {
+      if (!barbersGrid) return;
+      barbersGrid.innerHTML = BARBERS.map((b) => {
+        const isSel = barberSelect.value === b.id;
+        return (
+          '<button type="button" class="barber-choice-card ' + (isSel ? "is-selected" : "") + '" data-barber-choice="' + escapeHTML(b.id) + '">' +
+          '<span class="barber-card-monogram" aria-hidden="true">' + escapeHTML(b.initials || initials(b.name)) + "</span>" +
+          '<div class="barber-card-info">' +
+          "<strong>" + escapeHTML(b.name) + "</strong>" +
+          "<span>" + escapeHTML(b.role) + "</span>" +
+          "</div>" +
+          "</button>"
+        );
+      }).join("");
+
+      $$("[data-barber-choice]", barbersGrid).forEach((btn) => {
+        btn.addEventListener("click", () => {
+          barberSelect.value = btn.dataset.barberChoice;
+          renderBarbersGrid();
+          persistBooking();
+          updateSummary();
+          refreshAvailability();
+          // Auto-avanço para o passo 3 (horário)
+          setTimeout(() => goToStep(3), 160);
+        });
+      });
+    }
+    renderBarbersGrid();
+
+    // Cliques nos indicadores do stepper
+    $$("[data-step-indicator]").forEach((item) => {
+      item.addEventListener("click", () => {
+        const targetStep = Number(item.dataset.stepIndicator);
+        goToStep(targetStep);
+      });
+    });
+
+    // Botões de voltar
+    $$("[data-step-back]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        goToStep(Number(btn.dataset.stepBack));
+      });
+    });
+
+    const btnStep1Next = $("#btn-step-1-next");
+    if (btnStep1Next) {
+      btnStep1Next.addEventListener("click", () => goToStep(2));
+    }
+    const btnStep2Next = $("#btn-step-2-next");
+    if (btnStep2Next) {
+      btnStep2Next.addEventListener("click", () => goToStep(3));
+    }
+    const btnStep3Next = $("#btn-step-3-next");
+    if (btnStep3Next) {
+      btnStep3Next.addEventListener("click", () => goToStep(4));
     }
 
     const dayRoot = $("#booking-days");
@@ -543,6 +630,47 @@
       $("#summary-total").textContent = money(total);
       const stickyTotal = $("#booking-sticky-total");
       if (stickyTotal) stickyTotal.textContent = money(total);
+
+      // Atualiza o resumo da etapa 4
+      const recapSrv = $("#recap-services");
+      if (recapSrv) recapSrv.textContent = services.length ? services.map((s) => s.name).join(", ") : "Nenhum";
+      const recapBarber = $("#recap-barber");
+      if (recapBarber) recapBarber.textContent = barber ? barber.name : "Sem preferência";
+      const recapDt = $("#recap-datetime");
+      if (recapDt) recapDt.textContent = selectedDay && selectedTime ? selectedDay.full + " às " + selectedTime : "Escolha data e horário";
+      const recapDur = $("#recap-duration");
+      if (recapDur) recapDur.textContent = duration ? duration + " min" : "—";
+      const recapTot = $("#recap-total");
+      if (recapTot) recapTot.textContent = money(total);
+
+      // Atualiza botões de avançar das etapas
+      if (btnStep1Next) {
+        btnStep1Next.disabled = selected.size === 0;
+        btnStep1Next.textContent = selected.size
+          ? "Continuar para Profissional (" + selected.size + " selecionado" + (selected.size > 1 ? "s" : "") + ") →"
+          : "Escolha pelo menos 1 serviço →";
+      }
+      if (btnStep3Next) {
+        btnStep3Next.disabled = !selectedDay || !selectedTime;
+      }
+
+      const continueBtn = $("#booking-continue");
+      if (continueBtn) {
+        if (currentStep === 1) {
+          continueBtn.textContent = "Continuar →";
+          continueBtn.disabled = selected.size === 0;
+        } else if (currentStep === 2) {
+          continueBtn.textContent = "Data e Horário →";
+          continueBtn.disabled = false;
+        } else if (currentStep === 3) {
+          continueBtn.textContent = "Revisar →";
+          continueBtn.disabled = !selectedDay || !selectedTime;
+        } else {
+          continueBtn.textContent = "Confirmar →";
+          continueBtn.disabled = false;
+        }
+      }
+
       $("#booking-error").hidden = true;
 
       if (duplicationAlert) {
@@ -559,7 +687,6 @@
       updateSelectedCount();
       persistBooking();
       updateSummary();
-      setStepper(selected.size ? (selectedDay && selectedTime ? 4 : 2) : 1);
     });
 
     if (removeDuplicateCutBtn) {
@@ -598,10 +725,13 @@
       if (!button) return;
       selectedDay = days.find((day) => day.iso === button.dataset.day) || null;
       $$("[data-day]", dayRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      const dateLabel = $("#selected-date-label");
+      if (dateLabel && selectedDay) {
+        dateLabel.textContent = "Horários em " + selectedDay.full + ":";
+      }
       persistBooking();
       updateSummary();
       refreshAvailability();
-      setStepper(3);
     });
 
     timeRoot.addEventListener("click", (event) => {
@@ -611,22 +741,21 @@
       $$("[data-time]", timeRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
       persistBooking();
       updateSummary();
-      setStepper(4);
+      // Auto-avanço para o passo 4 (revisão e confirmação)
+      setTimeout(() => goToStep(4), 180);
     });
 
     barberSelect.addEventListener("change", () => {
+      renderBarbersGrid();
       persistBooking();
       updateSummary();
       refreshAvailability();
-      setStepper(3);
     });
     $("#client-name").addEventListener("input", () => {
       updateSummary();
-      setStepper(4);
     });
     $("#client-phone").addEventListener("input", () => {
       updateSummary();
-      setStepper(4);
     });
 
     const bookingGoogleBtn = $("#booking-google-login");
@@ -645,23 +774,21 @@
     const continueButton = $("#booking-continue");
     if (continueButton) {
       continueButton.addEventListener("click", () => {
-        if (!selected.size) {
-          setStepper(1);
-          serviceRoot.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
+        if (currentStep === 1) {
+          goToStep(2);
+        } else if (currentStep === 2) {
+          goToStep(3);
+        } else if (currentStep === 3) {
+          goToStep(4);
+        } else if (currentStep === 4) {
+          if (form.checkValidity()) form.requestSubmit();
+          else form.reportValidity();
         }
-        if (!selectedDay || !selectedTime) {
-          setStepper(3);
-          (!selectedDay ? dayRoot : timeRoot).scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
-        }
-        setStepper(4);
-        $('[data-booking-step="4"]').scrollIntoView({ behavior: "smooth", block: "center" });
-        if (form.checkValidity()) form.requestSubmit();
-        else form.reportValidity();
       });
     }
 
+    // Inicializa a primeira etapa visível
+    goToStep(selected.size ? (selectedDay && selectedTime ? 4 : 2) : 1, false);
     persistBooking();
     updateSummary();
     refreshAvailability();
