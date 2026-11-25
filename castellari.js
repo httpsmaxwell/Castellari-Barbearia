@@ -252,10 +252,11 @@
     for (let offset = 1; days.length < 7 && offset < 15; offset += 1) {
       const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
       if (date.getDay() === 0) continue;
+      const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", "");
+      const month = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "");
       days.push({
         iso: localISO(date),
-        label: new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", ""),
-        number: String(date.getDate()),
+        label: weekday.charAt(0).toUpperCase() + weekday.slice(1) + ", " + date.getDate() + " " + month,
         full: new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(date)
       });
     }
@@ -292,7 +293,7 @@
     const firstBarber = params.get("barber");
     const selected = new Set(SERVICES.some((service) => service.id === firstService) ? [firstService] : []);
     let selectedDay = null;
-    let selectedTime = TIME_SLOTS[2];
+    let selectedTime = null;
 
     const serviceRoot = $("#booking-services");
     CATEGORIES.forEach((category, index) => {
@@ -335,12 +336,12 @@
       '<option value="' + escapeHTML(person.id) + '">' + escapeHTML(person.name === "Sem preferência" ? person.name : person.name + " · " + person.role) + '</option>'
     ).join("");
     if (BARBERS.some((person) => person.id === firstBarber)) barberSelect.value = firstBarber;
+    else barberSelect.value = "sem-preferencia";
 
     const dayRoot = $("#booking-days");
     const days = upcomingDays();
-    selectedDay = days[0];
-    dayRoot.innerHTML = days.map((day, index) =>
-      '<button type="button" class="choice-button" data-day="' + day.iso + '" aria-pressed="' + String(index === 0) + '"><span>' + escapeHTML(day.label) + '</span><strong>' + day.number + '</strong></button>'
+    dayRoot.innerHTML = days.map((day) =>
+      '<button type="button" class="choice-button" data-day="' + day.iso + '" aria-label="' + escapeHTML(day.full) + '" aria-pressed="false">' + escapeHTML(day.label) + '</button>'
     ).join("");
     dayRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-day]");
@@ -351,8 +352,8 @@
     });
 
     const timeRoot = $("#booking-times");
-    timeRoot.innerHTML = TIME_SLOTS.map((time, index) =>
-      '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="' + String(index === 2) + '">' + time + '</button>'
+    timeRoot.innerHTML = TIME_SLOTS.map((time) =>
+      '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="false">' + time + '</button>'
     ).join("");
     timeRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-time]");
@@ -375,7 +376,7 @@
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
       $("#summary-services").textContent = services.length ? services.map((service) => service.name).join(", ") : "Selecione um serviço";
       $("#summary-professional").textContent = barber ? barber.name : "Sem preferência";
-      $("#summary-date").textContent = selectedDay ? selectedDay.full + " · " + selectedTime : "Escolha data e horário";
+      $("#summary-date").textContent = selectedDay && selectedTime ? selectedDay.full + " · " + selectedTime : "Escolha data e horário";
       $("#summary-duration").textContent = duration ? duration + " min" : "—";
       $("#summary-total").textContent = money(total);
       $("#booking-error").hidden = true;
@@ -388,6 +389,12 @@
         $("#booking-error").hidden = false;
         $("#booking-error").textContent = "Escolha pelo menos um serviço para continuar.";
         serviceRoot.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (!selectedDay || !selectedTime) {
+        $("#booking-error").hidden = false;
+        $("#booking-error").textContent = "Escolha uma data e um horário para continuar.";
+        $("#booking-days").scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
