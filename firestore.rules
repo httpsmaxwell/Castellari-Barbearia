@@ -1,0 +1,291 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: admins
+// Document ID: {uid}
+// Fields:
+//   - role/metadata managed server-side / Firebase Console only (client read-only self-check)
+//
+// Collection: users
+// Document ID: {uid}
+// Fields:
+//   - name: string (required, 1..120 chars)
+//   - email: string (optional, 0..160 chars, immutable by client)
+//   - phone: string (optional, 0..25 chars)
+//   - photoURL: string (optional, 0..500 chars)
+//   - visitsCount: int (0 on client create, admin-only increment)
+//   - clubPlan: null | string (null on client create, admin-only update)
+//   - createdAt: timestamp (immutable)
+//   - updatedAt: timestamp
+//
+// Collection: services, plans, barbers, settings
+// Document ID: {serviceId}, {planId}, {barberId}, {docId}
+// Fields:
+//   - Public catalog and barbershop metadata; admin-only writes.
+//
+// Collection: promotions
+// Document ID: {promoId}
+// Fields:
+//   - active: bool (authenticated users can read active == true; admins read/write all)
+//
+// Collection: appointments
+// Document ID: {appointmentId}
+// Fields:
+//   - code: string (optional, 0..30 chars)
+//   - clientUid: string (required, == request.auth.uid on create, immutable)
+//   - clientEmail: string (optional, 0..160 chars)
+//   - clientName: string (required, 1..120 chars)
+//   - clientPhone: string (required, 8..25 chars)
+//   - serviceIds: list<string> (required, 1..15 items)
+//   - serviceNames: list<string> (optional, 0..15 items)
+//   - barberId: string (required, 1..80 chars)
+//   - barberName: string (optional, 0..120 chars)
+//   - dateIso: string (required, 8..20 chars)
+//   - dateFull: string (optional, 0..80 chars)
+//   - time: string (required, 4..10 chars)
+//   - totalPrice: number (required, >= 0)
+//   - totalDuration: int (required, > 0)
+//   - status: string (required, 'pending' on create; client may transition 'pending'|'confirmed' -> 'cancelled')
+//   - slotId: string (optional, 0..120 chars)
+//   - createdAt: timestamp (immutable)
+//   - updatedAt: timestamp
+//
+// Collection: availability
+// Document ID: {slotId}
+// Fields (NO PII):
+//   - dateIso: string (required, 8..20 chars)
+//   - barberId: string (required, 1..80 chars)
+//   - time: string (required, 4..10 chars)
+//   - appointmentId: string (required, 1..120 chars)
+//   - clientUid: string (required, == request.auth.uid on create)
+//   - status: string (required, 'booked' on create)
+//   - createdAt: timestamp (required)
+//
+// Collection: planRequests
+// Document ID: {requestId}
+// Fields:
+//   - clientUid: string (required, == request.auth.uid on create)
+//   - clientEmail: string (optional, 0..160 chars)
+//   - clientName: string (required, 1..120 chars)
+//   - clientPhone: string (required, 8..25 chars)
+//   - planId: string (required, 1..80 chars)
+//   - planName: string (required, 1..120 chars)
+//   - planPrice: number (optional, >= 0)
+//   - waitlist: bool (optional)
+//   - status: string (required, 'pending' on create)
+//   - createdAt: timestamp (optional)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidOptionalString(data, field, minLen, maxLen) {
+      return !(field in data) || isValidString(data[field], minLen, maxLen);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUserCreate(data) {
+      return hasOnlyAllowedFields([
+          'name', 'email', 'phone', 'photoURL',
+          'visitsCount', 'clubPlan', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidString(data.name, 1, 120) &&
+        isValidOptionalString(data, 'email', 0, 160) &&
+        isValidOptionalString(data, 'phone', 0, 25) &&
+        isValidOptionalString(data, 'photoURL', 0, 500) &&
+        (!('visitsCount' in data) || data.visitsCount == 0) &&
+        (!('clubPlan' in data) || data.clubPlan == null) &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidUserClientUpdate(data) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'phone', 'photoURL', 'updatedAt'
+        ]) &&
+        isValidString(data.name, 1, 120) &&
+        isValidOptionalString(data, 'phone', 0, 25) &&
+        isValidOptionalString(data, 'photoURL', 0, 500) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAppointmentCreate(data) {
+      return hasOnlyAllowedFields([
+          'code', 'clientUid', 'clientEmail', 'clientName', 'clientPhone',
+          'serviceIds', 'serviceNames', 'barberId', 'barberName',
+          'dateIso', 'dateFull', 'time', 'totalPrice', 'totalDuration',
+          'status', 'slotId', 'createdAt', 'updatedAt'
+        ]) &&
+        data.clientUid == request.auth.uid &&
+        data.status == 'pending' &&
+        data.serviceIds is list &&
+        data.serviceIds.size() > 0 &&
+        data.serviceIds.size() <= 15 &&
+        (!('serviceNames' in data) || (data.serviceNames is list && data.serviceNames.size() <= 15)) &&
+        isValidString(data.barberId, 1, 80) &&
+        isValidOptionalString(data, 'barberName', 0, 120) &&
+        isValidString(data.dateIso, 8, 20) &&
+        isValidOptionalString(data, 'dateFull', 0, 80) &&
+        isValidString(data.time, 4, 10) &&
+        data.totalPrice is number &&
+        data.totalPrice >= 0 &&
+        data.totalPrice <= 100000 &&
+        data.totalDuration is int &&
+        data.totalDuration > 0 &&
+        data.totalDuration <= 1440 &&
+        isValidString(data.clientName, 1, 120) &&
+        isValidString(data.clientPhone, 8, 25) &&
+        isValidOptionalString(data, 'clientEmail', 0, 160) &&
+        isValidOptionalString(data, 'code', 0, 30) &&
+        isValidOptionalString(data, 'slotId', 0, 120) &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAppointmentClientCancel(data) {
+      return resource.data.clientUid == request.auth.uid &&
+        resource.data.status in ['pending', 'confirmed'] &&
+        data.status == 'cancelled' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAvailabilityCreate(data) {
+      return hasOnlyAllowedFields([
+          'dateIso', 'barberId', 'time', 'appointmentId',
+          'clientUid', 'status', 'createdAt'
+        ]) &&
+        data.clientUid == request.auth.uid &&
+        data.status == 'booked' &&
+        isValidString(data.dateIso, 8, 20) &&
+        isValidString(data.barberId, 1, 80) &&
+        isValidString(data.time, 4, 10) &&
+        isValidString(data.appointmentId, 1, 120) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPlanRequestCreate(data) {
+      return hasOnlyAllowedFields([
+          'clientUid', 'clientEmail', 'clientName', 'clientPhone',
+          'planId', 'planName', 'planPrice', 'waitlist', 'status', 'createdAt'
+        ]) &&
+        data.clientUid == request.auth.uid &&
+        data.status == 'pending' &&
+        isValidString(data.planId, 1, 80) &&
+        isValidString(data.planName, 1, 120) &&
+        isValidString(data.clientName, 1, 120) &&
+        isValidString(data.clientPhone, 8, 25) &&
+        isValidOptionalString(data, 'clientEmail', 0, 160) &&
+        (!('planPrice' in data) || (data.planPrice is number && data.planPrice >= 0 && data.planPrice <= 100000)) &&
+        (!('waitlist' in data) || data.waitlist is bool) &&
+        (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Admins lookup (read-only self-check; managed via Console / Admin SDK)
+    match /admins/{uid} {
+      allow get: if isOwner(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    // User profiles (PII protected; owner read/limited-write, admin full read/update)
+    match /users/{uid} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow create: if isOwner(uid) && isValidUserCreate(request.resource.data);
+      allow update: if isAdmin() || (isOwner(uid) && isValidUserClientUpdate(request.resource.data));
+      allow delete: if false;
+    }
+
+    // Public catalog & barbershop info (admin-only writes)
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /barbers/{barberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Promotions (authenticated users can read active promotions; admins manage all)
+    match /promotions/{promoId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.active == true);
+      allow write: if isAdmin();
+    }
+
+    // Appointments (client creates pending & can cancel pending/confirmed; admin manages all)
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.clientUid == request.auth.uid);
+      allow create: if isAuthenticated() && isValidAppointmentCreate(request.resource.data);
+      allow update: if isAdmin() || (isAuthenticated() && isValidAppointmentClientCancel(request.resource.data));
+      allow delete: if isAdmin();
+    }
+
+    // Public availability slot locks (NO PII)
+    match /availability/{slotId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidAvailabilityCreate(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.clientUid == request.auth.uid);
+    }
+
+    // Club plan interest / waitlist requests
+    match /planRequests/{requestId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.clientUid == request.auth.uid);
+      allow create: if isAuthenticated() && isValidPlanRequestCreate(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    // Default deny fallback
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

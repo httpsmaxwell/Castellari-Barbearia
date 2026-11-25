@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e7">
+  <meta name="description" content="Painel administrativo da Barbearia Castellari.">
+  <title>Painel Admin — Barbearia Castellari</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
+  <link rel="stylesheet" href="castellari.css">
+  <script src="castellari-data.js" defer></script>
+  <script type="module" src="castellari-firebase.js"></script>
+  <script src="castellari.js" defer></script>
+  <script type="module" src="admin.js"></script>
+</head>
+<body data-page="admin">
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+<header class="site-header">
+  <div class="container header-row">
+    <a class="brand" href="index.html" aria-label="Barbearia Castellari — início">
+      <span class="brand-mark" aria-hidden="true"><span>C</span></span>
+      <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Administração</span></span>
+    </a>
+    <nav class="primary-nav" aria-label="Navegação principal">
+      <a data-nav="home" href="index.html">Site</a>
+      <a data-nav="account" href="conta.html" data-account-link>Conta</a>
+      <a data-nav="admin" href="admin.html">Painel Admin</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar tema escuro" aria-pressed="false">☾</button>
+      <button class="menu-toggle" type="button" data-menu-toggle aria-controls="mobile-panel" aria-expanded="false" aria-label="Abrir menu">☰</button>
+    </div>
+  </div>
+  <nav class="mobile-panel" id="mobile-panel" aria-label="Navegação móvel">
+    <a data-nav="home" href="index.html">Site</a>
+    <a data-nav="account" href="conta.html" data-account-link>Conta</a>
+    <a data-nav="admin" href="admin.html">Painel Admin</a>
+  </nav>
+</header>
+<main id="main-content">
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow">Gestão Castellari</span>
+    <h1 class="page-title">Painel do Administrador</h1>
+    <p class="lead">Gerencie agenda, catálogo, planos, promoções e perfil da unidade.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <div id="admin-gate" class="booking-block">
+      <h2>Verificando acesso...</h2>
+      <p id="admin-gate-msg">Aguarde enquanto confirmamos sua conta.</p>
+      <div id="admin-gate-actions" class="record-actions" hidden>
+        <a class="button button-small" href="conta.html">Fazer login</a>
+      </div>
+      <div id="admin-uid-box" class="plan-interest-box" hidden>
+        <div>
+          <strong>Seu UID para cadastro em <code>admins/{uid}</code>:</strong>
+          <div id="admin-uid-value" class="record-code"></div>
+        </div>
+        <button type="button" id="admin-logout-gate" class="button button-small button-outline">Sair</button>
+      </div>
+    </div>
+
+    <div id="admin-panel" hidden>
+      <div class="admin-topbar">
+        <div class="category-list" role="tablist" aria-label="Seções do painel">
+          <button type="button" class="category-button" data-admin-tab="agenda" aria-pressed="true">Agenda</button>
+          <button type="button" class="category-button" data-admin-tab="catalog" aria-pressed="false">Serviços & Planos</button>
+          <button type="button" class="category-button" data-admin-tab="promos" aria-pressed="false">Promoções</button>
+          <button type="button" class="category-button" data-admin-tab="profile" aria-pressed="false">Perfil Admin</button>
+        </div>
+        <button type="button" id="admin-logout-btn" class="button button-small button-outline">Sair</button>
+      </div>
+
+      <section data-admin-section="agenda" class="booking-block account-section">
+        <div class="home-preview-heading">
+          <h2>Agendamentos</h2>
+          <select id="admin-status-filter" class="choice-select admin-filter-select" aria-label="Filtrar por status">
+            <option value="">Todos os status</option>
+            <option value="pending">Aguardando confirmação</option>
+            <option value="confirmed">Confirmados</option>
+            <option value="completed">Concluídos</option>
+            <option value="cancelled">Cancelados</option>
+          </select>
+        </div>
+        <div id="admin-appointments-list" class="stack-list"></div>
+
+        <h2 class="admin-subtitle">Solicitações do Clube</h2>
+        <div id="admin-plan-requests-list" class="stack-list"></div>
+      </section>
+
+      <section data-admin-section="catalog" class="booking-block account-section" hidden>
+        <div class="home-preview-heading">
+          <div>
+            <h2>Catálogo no Firestore</h2>
+            <p class="muted-text">Importe os dados iniciais do protótipo ou ajuste vagas e preços diretamente.</p>
+          </div>
+          <button type="button" id="seed-catalog-btn" class="button button-small">Importar catálogo inicial</button>
+        </div>
+        <p id="catalog-admin-feedback" class="auth-feedback" role="status" hidden></p>
+        <h3 class="admin-subtitle">Planos mensais (vagas)</h3>
+        <div id="admin-plans-list" class="stack-list"></div>
+        <h3 class="admin-subtitle">Serviços</h3>
+        <div id="admin-services-list" class="stack-list"></div>
+      </section>
+
+      <section data-admin-section="promos" class="booking-block account-section" hidden>
+        <h2>Promoções para clientes</h2>
+        <form id="promo-form" class="booking-form">
+          <div class="form-grid">
+            <div class="field"><label for="promo-title">Título</label><input id="promo-title" type="text" placeholder="Ex.: 15% OFF na Barboterapia" required></div>
+            <div class="field"><label for="promo-code">Código / Cupom</label><input id="promo-code" type="text" placeholder="Ex.: VOLTA15"></div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="promo-target">Público</label>
+              <select id="promo-target" class="choice-select">
+                <option value="all">Todos os clientes logados</option>
+                <option value="first_visit">Primeira visita (0 atendimentos)</option>
+                <option value="club">Assinantes do Clube</option>
+                <option value="email">Cliente específico (por e-mail)</option>
+              </select>
+            </div>
+            <div class="field"><label for="promo-email">E-mail (se específico)</label><input id="promo-email" type="email" placeholder="cliente@email.com"></div>
+          </div>
+          <div class="field"><label for="promo-desc">Descrição</label><input id="promo-desc" type="text" placeholder="Regras ou validade da promoção" required></div>
+          <button type="submit" class="button button-small">Salvar promoção</button>
+        </form>
+        <p id="promo-feedback" class="auth-feedback" role="status" hidden></p>
+        <div id="admin-promos-list" class="stack-list admin-subtitle"></div>
+      </section>
+
+      <section data-admin-section="profile" class="booking-block account-section" hidden>
+        <h2>Perfil do Administrador & Unidade</h2>
+        <p class="muted-text" id="admin-identity"></p>
+        <form id="shop-settings-form" class="booking-form">
+          <div class="form-grid">
+            <div class="field"><label for="shop-name">Nome da barbearia</label><input id="shop-name" type="text" required></div>
+            <div class="field"><label for="shop-unit">Unidade / Endereço</label><input id="shop-unit" type="text" required></div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label for="shop-days">Dias de funcionamento</label><input id="shop-days" type="text" required></div>
+            <div class="field"><label for="shop-hours">Horário</label><input id="shop-hours" type="text" required></div>
+          </div>
+          <button type="submit" class="button button-small">Salvar informações</button>
+        </form>
+        <p id="settings-feedback" class="auth-feedback" role="status" hidden></p>
+      </section>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom"><span>Barbearia Castellari · Painel Administrativo</span><span>© <span id="current-year"></span></span></div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1715,3 +1715,186 @@ a.service-card:focus-visible {
     animation: none;
   }
 }
+
+
+/* ==========================================================================
+   Conta do cliente, login e painel administrativo
+   ========================================================================== */
+.auth-card {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-google-btn {
+  width: 100%;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-feedback {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--green-2);
+  background: color-mix(in srgb, var(--green-2) 10%, var(--surface));
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-feedback.is-error {
+  border-color: var(--wine);
+  background: color-mix(in srgb, var(--wine) 10%, var(--surface));
+  color: var(--wine);
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.account-section {
+  margin-top: 24px;
+}
+
+.stack-list {
+  display: grid;
+  gap: 12px;
+}
+
+.record-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.record-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.record-head h3 {
+  margin: 4px 0 0;
+  font: 600 18px/1.2 var(--serif);
+}
+
+.record-code {
+  display: inline-block;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.record-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.status-pill {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-confirmed {
+  border-color: var(--green-2);
+  color: var(--green-2);
+}
+
+.status-cancelled {
+  border-color: var(--wine);
+  color: var(--wine);
+}
+
+.admin-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-filter-select {
+  width: auto;
+  min-width: 210px;
+}
+
+.admin-subtitle {
+  margin: 26px 0 12px;
+}
+
+.muted-text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.choice-button:disabled {
+  opacity: .42;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .account-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,15 +1,22 @@
 (function () {
   const data = window.CastellariData || {};
-  const SERVICES = data.SERVICES || [];
-  const PLANS = data.PLANS || [];
-  const BARBERS = data.BARBERS || [];
-  const CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
+  let SERVICES = data.SERVICES || [];
+  let PLANS = data.PLANS || [];
+  let BARBERS = data.BARBERS || [];
+  let CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
   const TIME_SLOTS = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
   const BOOKING_STORAGE_KEY = "castellari-booking";
   const THEME_STORAGE_KEY = "castellari-theme";
 
+  let currentUser = null;
+  let currentProfile = null;
+
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+  function fb() {
+    return window.CastellariFirebase || null;
+  }
 
   function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, (char) => ({
@@ -124,6 +131,15 @@
     });
   }
 
+  function updateAccountLinks(user) {
+    const label = user
+      ? "Conta (" + String(user.displayName || user.email || "Cliente").trim().split(/\s+/)[0] + ")"
+      : "Entrar";
+    $$("[data-account-link]").forEach((link) => {
+      link.textContent = label;
+    });
+  }
+
   function serviceCard(service, index) {
     return (
       '<a class="service-card" href="agendar.html?service=' + encodeURIComponent(service.id) + '" aria-label="Escolher ' + escapeHTML(service.name) + '">' +
@@ -202,13 +218,13 @@
           const badge = soldOut ? "Lista de espera" : (plan.badge || "Clube Castellari");
           const availability = soldOut
             ? "Vagas temporariamente preenchidas"
-            : (plan.slots ? plan.slots + " vagas no protótipo" : "Consulte a equipe");
+            : (plan.slots ? plan.slots + " vagas disponíveis" : "Consulte a equipe");
           const planParam = encodeURIComponent(plan.id || String(index));
           return (
             '<article class="plan-card ' + (plan.badgeType === "gold" ? "is-featured" : "") + '">' +
             '<span class="plan-status">' + escapeHTML(badge) + "</span><h3>" + escapeHTML(plan.name) + "</h3>" +
             "<p>" + escapeHTML(plan.days) + '</p><div class="plan-price">' + money(plan.price) + "<span> / mês</span></div>" +
-            "<ul>" + plan.benefits.map((benefit) => "<li>" + escapeHTML(benefit) + "</li>").join("") + "</ul>" +
+            "<ul>" + (plan.benefits || []).map((benefit) => "<li>" + escapeHTML(benefit) + "</li>").join("") + "</ul>" +
             '<p class="plan-availability">' + escapeHTML(availability) + "</p>" +
             '<a class="button ' + (plan.badgeType === "gold" ? "" : "button-outline") + '" href="agendar.html?plano=' + planParam + '">Tenho interesse <span aria-hidden="true">→</span></a></article>'
           );
@@ -286,6 +302,35 @@
     return Number.isInteger(index) ? PLANS[index] || null : null;
   }
 
+  function refreshAuthUIInBooking() {
+    const authBox = $("#booking-auth-box");
+    const planAuthBox = $("#plan-auth-box");
+    const signedInfo = $("#booking-signed-user");
+    const nameInput = $("#client-name");
+    const phoneInput = $("#client-phone");
+    const planNameInput = $("#plan-client-name");
+    const planPhoneInput = $("#plan-client-phone");
+
+    if (currentUser) {
+      if (authBox) authBox.hidden = true;
+      if (planAuthBox) planAuthBox.hidden = true;
+      if (signedInfo) {
+        signedInfo.hidden = false;
+        signedInfo.textContent = "Conectado como " + (currentUser.displayName || currentUser.email);
+      }
+      const bestName = (currentProfile && currentProfile.name) || currentUser.displayName || "";
+      const bestPhone = (currentProfile && currentProfile.phone) || "";
+      if (nameInput && !nameInput.value) nameInput.value = bestName;
+      if (phoneInput && !phoneInput.value) phoneInput.value = bestPhone;
+      if (planNameInput && !planNameInput.value) planNameInput.value = bestName;
+      if (planPhoneInput && !planPhoneInput.value) planPhoneInput.value = bestPhone;
+    } else {
+      if (authBox) authBox.hidden = false;
+      if (planAuthBox) planAuthBox.hidden = false;
+      if (signedInfo) signedInfo.hidden = true;
+    }
+  }
+
   function initPlanInterest(form) {
     const planParam = new URLSearchParams(location.search).get("plano");
     const plan = findPlan(planParam);
@@ -299,21 +344,52 @@
 
     $("#booking-page-title").textContent = soldOut ? "Lista de espera do Clube." : "Consulte o Clube Castellari.";
     $("#booking-page-lead").textContent = soldOut
-      ? "Este plano está com vagas preenchidas no momento. Registre seu interesse demonstrativo."
-      : "Veja os detalhes do plano selecionado e envie uma solicitação demonstrativa.";
+      ? "Este plano está com vagas preenchidas no momento. Registre seu interesse."
+      : "Veja os detalhes do plano selecionado e envie sua solicitação.";
     $("#plan-interest-heading").textContent = soldOut ? "Entrar na lista de espera" : "Consultar um plano";
     $("#plan-interest-name").textContent = plan.name;
     $("#plan-interest-price").textContent = money(plan.price) + " / mês";
     $("#plan-interest-details").textContent = soldOut
-      ? "As vagas deste plano estão temporariamente preenchidas. Este formulário é apenas demonstrativo."
-      : "A equipe poderá confirmar condições e disponibilidade. Este formulário é apenas demonstrativo.";
+      ? "As vagas deste plano estão temporariamente preenchidas. Registre seu interesse para entrar na lista de espera."
+      : "A equipe confirmará condições e disponibilidade com você.";
 
-    form.addEventListener("submit", (event) => {
+    const planGoogleBtn = $("#plan-google-login");
+    if (planGoogleBtn) {
+      planGoogleBtn.addEventListener("click", async () => {
+        if (!fb()) return;
+        try {
+          await fb().signInWithGoogle();
+        } catch (err) {
+          alert(fb().formatFirebaseError(err));
+        }
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const phoneInput = $("#plan-client-phone");
       if (phoneInput && !isValidPhone(phoneInput.value)) {
         phoneInput.setCustomValidity("Informe um WhatsApp com DDD (10 ou 11 dígitos).");
         phoneInput.reportValidity();
+        return;
+      }
+
+      if (fb() && currentUser) {
+        try {
+          await fb().createPlanRequest({
+            user: currentUser,
+            plan,
+            clientName: $("#plan-client-name").value,
+            clientPhone: phoneInput.value,
+          });
+          $("#plan-success-note").textContent =
+            "Sua solicitação para o plano " + plan.name + " foi registrada. Acompanhe o status em Minha Conta.";
+        } catch (err) {
+          alert(fb().formatFirebaseError(err));
+          return;
+        }
+      } else if (fb() && !currentUser) {
+        alert("Entre com sua conta Google ou e-mail antes de enviar a solicitação.");
         return;
       }
 
@@ -354,6 +430,7 @@
     let selectedTime = TIME_SLOTS.includes(saved.selectedTime) ? saved.selectedTime : null;
 
     const serviceRoot = $("#booking-services");
+    serviceRoot.innerHTML = "";
     CATEGORIES.forEach((category) => {
       const items = SERVICES.filter((service) => service.category === category);
       const section = document.createElement("details");
@@ -409,10 +486,33 @@
     dayRoot.setAttribute("aria-busy", "false");
 
     const timeRoot = $("#booking-times");
-    timeRoot.innerHTML = TIME_SLOTS.map((time) =>
-      '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="' + String(selectedTime === time) + '">' + time + "</button>"
-    ).join("");
-    timeRoot.setAttribute("aria-busy", "false");
+    let bookedTimes = [];
+
+    function renderTimeButtons() {
+      timeRoot.innerHTML = TIME_SLOTS.map((time) => {
+        const busy = bookedTimes.includes(time);
+        const pressed = !busy && selectedTime === time;
+        return '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="' + String(pressed) + '"' + (busy ? " disabled" : "") + ">" + time + "</button>";
+      }).join("");
+      timeRoot.setAttribute("aria-busy", "false");
+    }
+    renderTimeButtons();
+
+    async function refreshAvailability() {
+      if (!selectedDay || !fb()) {
+        bookedTimes = [];
+        renderTimeButtons();
+        return;
+      }
+      try {
+        bookedTimes = await fb().getBookedTimesForDay(selectedDay.iso, barberSelect.value);
+        if (selectedTime && bookedTimes.includes(selectedTime)) {
+          selectedTime = null;
+          updateSummary();
+        }
+        renderTimeButtons();
+      } catch (_) {}
+    }
 
     const persistBooking = () => {
       writeStorageJSON(BOOKING_STORAGE_KEY, {
@@ -500,12 +600,13 @@
       $$("[data-day]", dayRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
       persistBooking();
       updateSummary();
+      refreshAvailability();
       setStepper(3);
     });
 
     timeRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-time]");
-      if (!button) return;
+      if (!button || button.disabled) return;
       selectedTime = button.dataset.time;
       $$("[data-time]", timeRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
       persistBooking();
@@ -516,6 +617,7 @@
     barberSelect.addEventListener("change", () => {
       persistBooking();
       updateSummary();
+      refreshAvailability();
       setStepper(3);
     });
     $("#client-name").addEventListener("input", () => {
@@ -526,6 +628,19 @@
       updateSummary();
       setStepper(4);
     });
+
+    const bookingGoogleBtn = $("#booking-google-login");
+    if (bookingGoogleBtn) {
+      bookingGoogleBtn.addEventListener("click", async () => {
+        if (!fb()) return;
+        try {
+          await fb().signInWithGoogle();
+        } catch (err) {
+          $("#booking-error").hidden = false;
+          $("#booking-error").textContent = fb().formatFirebaseError(err);
+        }
+      });
+    }
 
     const continueButton = $("#booking-continue");
     if (continueButton) {
@@ -549,8 +664,9 @@
 
     persistBooking();
     updateSummary();
+    refreshAvailability();
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!selected.size) {
         $("#booking-error").hidden = false;
@@ -571,13 +687,58 @@
         return;
       }
 
+      if (fb() && !currentUser) {
+        $("#booking-error").hidden = false;
+        $("#booking-error").textContent = "Entre com sua conta Google ou e-mail para confirmar o agendamento e salvar no seu histórico.";
+        $("#booking-auth-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
       const chosen = chosenServices();
+      const totalPrice = chosen.reduce((sum, service) => sum + service.price, 0);
+      const totalDuration = chosen.reduce((sum, service) => sum + service.duration, 0);
+      const submitBtn = $(".submit-booking", form);
+
+      if (fb() && currentUser) {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Confirmando...";
+        }
+        try {
+          const result = await fb().createBooking({
+            user: currentUser,
+            serviceIds: chosen.map((s) => s.id),
+            serviceNames: chosen.map((s) => s.name),
+            barberId: barberSelect.value,
+            barberName: barber ? barber.name : "Sem preferência",
+            dateIso: selectedDay.iso,
+            dateFull: selectedDay.full,
+            time: selectedTime,
+            totalPrice,
+            totalDuration,
+            clientName: $("#client-name").value,
+            clientPhone: phoneInput.value,
+          });
+          const codeEl = $("#success-code");
+          if (codeEl) codeEl.textContent = "Código da reserva: " + result.code + ". Acompanhe em Minha Conta.";
+        } catch (err) {
+          $("#booking-error").hidden = false;
+          $("#booking-error").textContent = fb().formatFirebaseError(err);
+          await refreshAvailability();
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Confirmar agendamento →";
+          }
+          return;
+        }
+      }
+
       $("#success-name").textContent = $("#client-name").value.trim().split(/\s+/)[0];
       $("#success-services").textContent = chosen.map((service) => service.name).join(", ");
       $("#success-date").textContent = selectedDay.full + " às " + selectedTime;
       $("#success-professional").textContent = barber ? barber.name : "Sem preferência";
-      $("#success-total").textContent = money(chosen.reduce((sum, service) => sum + service.price, 0));
+      $("#success-total").textContent = money(totalPrice);
 
       try {
         localStorage.removeItem(BOOKING_STORAGE_KEY);
@@ -592,7 +753,7 @@
   }
 
   function initPhoneMasks() {
-    [$("#client-phone"), $("#plan-client-phone")].filter(Boolean).forEach((input) => {
+    [$("#client-phone"), $("#plan-client-phone"), $("#reg-phone"), $("#profile-phone")].filter(Boolean).forEach((input) => {
       input.addEventListener("input", () => {
         input.setCustomValidity("");
         const digits = phoneDigits(input.value);
@@ -609,17 +770,53 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    initTheme();
-    initNavigation();
+  function renderAllViews() {
     renderFeaturedServices();
     renderHomePreviews();
     renderCatalog();
     renderPlans();
     renderTeam();
+  }
+
+  async function syncWithFirebase(api) {
+    if (!api) return;
+    api.onAuthChange(async (user) => {
+      currentUser = user;
+      updateAccountLinks(user);
+      currentProfile = user ? await api.getUserProfile(user.uid) : null;
+      refreshAuthUIInBooking();
+    });
+
+    const remote = await api.loadCatalogFromFirestore();
+    let updated = false;
+    if (remote.services) {
+      SERVICES = remote.services;
+      CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
+      updated = true;
+    }
+    if (remote.plans) {
+      PLANS = remote.plans;
+      updated = true;
+    }
+    if (remote.barbers) {
+      BARBERS = remote.barbers;
+      updated = true;
+    }
+    if (updated) {
+      renderAllViews();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
+    initNavigation();
+    renderAllViews();
     initBooking();
     initPhoneMasks();
     const year = $("#current-year");
     if (year) year.textContent = String(new Date().getFullYear());
+
+    if (fb()) syncWithFirebase(fb());
+    else window.addEventListener("castellari:firebase-ready", (e) => syncWithFirebase(e.detail), { once: true });
   });
 })();

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e7">
+  <meta name="description" content="Acesse sua conta na Barbearia Castellari para acompanhar agendamentos, histórico e promoções exclusivas.">
+  <title>Minha Conta — Barbearia Castellari</title>
+  <link rel="canonical" href="https://castellari-barbearia.netlify.app/conta.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
+  <link rel="stylesheet" href="castellari.css">
+  <script src="castellari-data.js" defer></script>
+  <script type="module" src="castellari-firebase.js"></script>
+  <script src="castellari.js" defer></script>
+  <script type="module" src="conta.js"></script>
+</head>
+<body data-page="account">
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+<header class="site-header">
+  <div class="container header-row">
+    <a class="brand" href="index.html" aria-label="Barbearia Castellari — início">
+      <span class="brand-mark" aria-hidden="true"><span>C</span></span>
+      <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
+    </a>
+    <nav class="primary-nav" aria-label="Navegação principal">
+      <a data-nav="home" href="index.html">Início</a>
+      <a data-nav="services" href="servicos.html">Serviços</a>
+      <a data-nav="plans" href="planos.html">Clube</a>
+      <a data-nav="team" href="equipe.html">Equipe</a>
+      <a data-nav="account" href="conta.html" data-account-link>Entrar</a>
+    </nav>
+    <div class="header-actions">
+      <a class="button button-small" data-nav="booking" href="agendar.html">Agendar horário <span aria-hidden="true">→</span></a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar tema escuro" aria-pressed="false">☾</button>
+      <button class="menu-toggle" type="button" data-menu-toggle aria-controls="mobile-panel" aria-expanded="false" aria-label="Abrir menu">☰</button>
+    </div>
+  </div>
+  <nav class="mobile-panel" id="mobile-panel" aria-label="Navegação móvel">
+    <a data-nav="home" href="index.html">Início</a>
+    <a data-nav="services" href="servicos.html">Serviços</a>
+    <a data-nav="plans" href="planos.html">Clube</a>
+    <a data-nav="team" href="equipe.html">Equipe</a>
+    <a data-nav="account" href="conta.html" data-account-link>Entrar</a>
+    <a class="button" data-nav="booking" href="agendar.html">Agendar horário <span aria-hidden="true">→</span></a>
+  </nav>
+</header>
+<main id="main-content">
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow">Área do Cliente</span>
+    <h1 class="page-title" id="account-hero-title">Sua conta Castellari</h1>
+    <p class="lead" id="account-hero-lead">Entre com Google ou e-mail para acompanhar seus agendamentos, histórico e promoções.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <div id="account-auth-view" class="auth-card">
+      <div class="auth-tabs" role="tablist" aria-label="Acesso à conta">
+        <button type="button" class="category-button" data-auth-tab="login" aria-pressed="true">Entrar</button>
+        <button type="button" class="category-button" data-auth-tab="register" aria-pressed="false">Criar conta</button>
+      </div>
+      <button type="button" id="google-login-btn" class="button button-outline auth-google-btn">Continuar com Google</button>
+      <div class="auth-divider"><span>ou com e-mail</span></div>
+
+      <form id="login-form" class="booking-form">
+        <div class="field"><label for="login-email">E-mail</label><input id="login-email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="login-password">Senha</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+        <div class="auth-actions-row">
+          <button type="submit" class="button">Entrar</button>
+          <button type="button" id="forgot-password-btn" class="text-link auth-link-btn">Esqueci minha senha</button>
+        </div>
+      </form>
+
+      <form id="register-form" class="booking-form" hidden>
+        <div class="form-grid">
+          <div class="field"><label for="reg-name">Nome completo</label><input id="reg-name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="reg-phone">WhatsApp</label><input id="reg-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(92) 99999-9999" required></div>
+        </div>
+        <div class="field"><label for="reg-email">E-mail</label><input id="reg-email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="reg-password">Senha (mín. 6 caracteres)</label><input id="reg-password" type="password" autocomplete="new-password" minlength="6" required></div>
+        <button type="submit" class="button">Criar conta</button>
+      </form>
+
+      <p id="auth-feedback" class="auth-feedback" role="status" hidden></p>
+    </div>
+
+    <div id="account-dashboard" hidden>
+      <div id="admin-shortcut-banner" class="booking-duplication-alert" hidden>
+        <span><strong>Perfil Administrador ativo:</strong> você tem acesso à gestão completa da barbearia.</span>
+        <a class="button button-small" href="admin.html">Abrir Painel Admin →</a>
+      </div>
+
+      <div class="account-grid">
+        <section class="booking-block">
+          <span class="eyebrow">Meu Perfil</span>
+          <h2 id="profile-greeting">Bem-vindo</h2>
+          <p class="muted-text" id="profile-stats">Carregando dados...</p>
+          <form id="profile-form" class="booking-form">
+            <div class="field"><label for="profile-name">Nome</label><input id="profile-name" type="text" required></div>
+            <div class="field"><label for="profile-phone">WhatsApp</label><input id="profile-phone" type="tel" inputmode="numeric" placeholder="(92) 99999-9999"></div>
+            <div class="field"><label for="profile-email">E-mail</label><input id="profile-email" type="email" disabled></div>
+            <div class="auth-actions-row">
+              <button type="submit" class="button button-small">Salvar perfil</button>
+              <button type="button" id="logout-btn" class="button button-small button-outline">Sair da conta</button>
+            </div>
+          </form>
+          <p id="profile-feedback" class="auth-feedback" role="status" hidden></p>
+        </section>
+
+        <section class="booking-block">
+          <span class="eyebrow">Vantagens</span>
+          <h2>Promoções para você</h2>
+          <div id="client-promotions-list" class="stack-list">
+            <p class="empty-state">Carregando promoções...</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="booking-block account-section">
+        <div class="home-preview-heading">
+          <div>
+            <span class="eyebrow">Agenda</span>
+            <h2>Meus agendamentos e histórico</h2>
+          </div>
+          <a class="button button-small" href="agendar.html">Novo agendamento →</a>
+        </div>
+        <div id="client-appointments-list" class="stack-list">
+          <p class="empty-state">Carregando agendamentos...</p>
+        </div>
+      </section>
+
+      <section class="booking-block account-section">
+        <span class="eyebrow">Clube Castellari</span>
+        <h2>Minhas solicitações de plano</h2>
+        <div id="client-plan-requests" class="stack-list">
+          <p class="empty-state">Carregando solicitações...</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true"><span>C</span></span>
+          <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
+        </a>
+        <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica e feito para a vida de hoje.</p>
+      </div>
+      <div>
+        <p class="footer-heading">Unidade</p>
+        <div class="footer-links">
+          <span>Planalto · Manaus, AM</span>
+          <span>Segunda a sábado</span>
+          <span>09h às 19h</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span></span></div>
+  </div>
+</footer>
+</body>
+</html>
