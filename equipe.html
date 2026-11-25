@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#f4f0e7">
   <meta name="description" content="Conheça os profissionais da unidade Planalto da Barbearia Castellari.">
   <title>Equipe — Barbearia Castellari</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta property="og:title" content="Equipe — Barbearia Castellari">
+  <meta property="og:description" content="Conheça os profissionais da unidade Planalto da Barbearia Castellari.">
+  <meta property="og:image" content="https://castellari-barbearia.netlify.app/castellari-og.svg">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="castellari.css">
   <script src="castellari.js" defer></script>
 </head>
@@ -39,7 +44,7 @@
 <section class="page-hero"><div class="container"><span class="eyebrow">Equipe Castellari</span><h1 class="page-title">Nossa equipe</h1><p class="lead">Conheça os profissionais da unidade Planalto.</p></div></section>
 <section class="section"><div class="container">
   <p class="catalog-note">Nomes e especialidades precisam de confirmação pela barbearia.</p>
-  <div class="team-grid" id="team-grid"></div>
+  <div class="team-grid" id="team-grid" aria-busy="true"><article class="team-card skeleton-card" aria-hidden="true"></article><article class="team-card skeleton-card" aria-hidden="true"></article><article class="team-card skeleton-card" aria-hidden="true"></article></div><noscript><style>.skeleton-card,.skeleton-line{display:none!important}</style><p class="catalog-note">Ative o JavaScript para ver a equipe.</p></noscript>
 </div></section>
 </main>
 <footer class="site-footer">
@@ -64,5 +69,6 @@
     <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span> · Conteúdo demonstrativo</span></div>
   </div>
 </footer>
+<script>window.setTimeout(function(){document.querySelectorAll('[aria-busy="true"]').forEach(function(list){if(list.querySelector('.skeleton-card,.skeleton-line')){list.setAttribute('aria-busy','false');var message=document.createElement('p');message.className='empty-state';message.textContent='Não foi possível carregar este conteúdo.';list.replaceChildren(message);}});},8000);</script>
 </body>
 </html>

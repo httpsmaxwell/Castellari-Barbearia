@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#f4f0e7">
   <meta name="description" content="Conheça o catálogo de serviços e cuidados da Barbearia Castellari.">
   <title>Serviços — Barbearia Castellari</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta property="og:title" content="Serviços — Barbearia Castellari">
+  <meta property="og:description" content="Conheça o catálogo de serviços e cuidados da Barbearia Castellari.">
+  <meta property="og:image" content="https://castellari-barbearia.netlify.app/castellari-og.svg">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="castellari.css">
   <script src="castellari.js" defer></script>
 </head>
@@ -40,7 +45,7 @@
 <section class="section"><div class="container">
   <p class="catalog-note">Valores e descrições demonstrativos, sujeitos à confirmação pela barbearia.</p>
   <div class="catalog-tools"><div><p class="field-label">Filtrar por categoria</p><div class="category-list" id="category-list" aria-label="Categorias de serviços"></div></div><div class="field"><label for="service-search">Buscar serviço</label><input id="service-search" type="search" placeholder="Ex.: corte, barba, terapia" autocomplete="off"></div></div>
-  <p class="result-count" id="service-count" aria-live="polite"></p><div class="card-grid" id="services-grid"></div>
+  <p class="result-count" id="service-count" aria-live="polite"></p><div class="card-grid" id="services-grid" aria-busy="true"><article class="service-card skeleton-card" aria-hidden="true"></article><article class="service-card skeleton-card" aria-hidden="true"></article><article class="service-card skeleton-card" aria-hidden="true"></article></div><noscript><style>.skeleton-card,.skeleton-line{display:none!important}</style><p class="catalog-note">Ative o JavaScript para ver os serviços.</p></noscript>
 </div></section>
 </main>
 <footer class="site-footer">
@@ -65,5 +70,6 @@
     <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span> · Conteúdo demonstrativo</span></div>
   </div>
 </footer>
+<script>window.setTimeout(function(){document.querySelectorAll('[aria-busy="true"]').forEach(function(list){if(list.querySelector('.skeleton-card,.skeleton-line')){list.setAttribute('aria-busy','false');var message=document.createElement('p');message.className='empty-state';message.textContent='Não foi possível carregar este conteúdo.';list.replaceChildren(message);}});},8000);</script>
 </body>
 </html>

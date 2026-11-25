@@ -174,12 +174,12 @@
   }
 
   function serviceCard(service, index) {
-    return '<article class="service-card">' +
+    return '<a class="service-card" href="agendar.html?service=' + encodeURIComponent(service.id) + '" aria-label="Escolher ' + escapeHTML(service.name) + '">' +
       '<div class="service-topline"><span class="service-number">' + String(index + 1).padStart(2, "0") + '</span>' +
       (service.badge ? '<span class="service-badge">' + escapeHTML(service.badge) + '</span>' : "") + '</div>' +
       '<h3>' + escapeHTML(service.name) + '</h3><p>' + escapeHTML(service.desc) + '</p>' +
       '<div class="service-bottom"><div class="price"><small>' + service.duration + ' min</small>' + escapeHTML(servicePrice(service)) + '</div>' +
-      '<a class="text-link" href="agendar.html?service=' + encodeURIComponent(service.id) + '">Escolher <span aria-hidden="true">→</span></a></div></article>';
+      '<span class="text-link service-choose">Escolher <span aria-hidden="true">→</span></span></div></a>';
   }
   function renderFeaturedServices() {
     const grid = $("#featured-services");
@@ -187,6 +187,7 @@
     const ids = ["corte-premium", "barboterapia", "combo-premium"];
     grid.innerHTML = ids.map((id) => SERVICES.find((service) => service.id === id)).filter(Boolean)
       .map((service, index) => serviceCard(service, index)).join("");
+    grid.setAttribute("aria-busy", "false");
   }
   function renderCatalog() {
     const grid = $("#services-grid");
@@ -216,11 +217,12 @@
     }));
     if (search) search.addEventListener("input", draw);
     draw();
+    grid.setAttribute("aria-busy", "false");
   }
   function renderPlans() {
     const grid = $("#plans-grid");
     if (!grid) return;
-    grid.innerHTML = PLANS.map((plan, index) => {
+    grid.innerHTML = PLANS.length ? PLANS.map((plan, index) => {
       const soldOut = plan.slots === 0 || plan.badge === "Esgotado";
       const badge = soldOut ? "Lista de espera" : (plan.badge || "Clube Castellari");
       const availability = soldOut ? "Vagas temporariamente preenchidas" : (plan.slots ? plan.slots + " vagas no protótipo" : "Consulte a equipe");
@@ -230,17 +232,38 @@
         '<ul>' + plan.benefits.map((benefit) => '<li>' + escapeHTML(benefit) + '</li>').join("") + '</ul>' +
         '<p class="plan-availability">' + escapeHTML(availability) + '</p>' +
         '<a class="button ' + (plan.badgeType === "gold" ? "" : "button-outline") + '" href="agendar.html?plano=' + index + '">Tenho interesse <span aria-hidden="true">→</span></a></article>';
-    }).join("");
+    }).join("") : '<p class="empty-state">Nenhum plano disponível.</p>';
+    grid.setAttribute("aria-busy", "false");
   }
   function renderTeam() {
     const grid = $("#team-grid");
     if (!grid) return;
-    grid.innerHTML = BARBERS.filter((person) => person.id !== "sem-preferencia").map((person) =>
+    const people = BARBERS.filter((person) => person.id !== "sem-preferencia");
+    grid.innerHTML = people.length ? people.map((person) =>
       '<a class="team-card" href="agendar.html?barber=' + encodeURIComponent(person.id) + '">' +
       '<span class="team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + '</span>' +
       '<h3>' + escapeHTML(person.name) + '</h3><p>' + escapeHTML(person.role) + '</p>' +
       '<span class="text-link">Agendar com ' + escapeHTML(person.name.split(" ")[0]) + ' <span aria-hidden="true">→</span></span></a>'
-    ).join("");
+    ).join("") : '<p class="empty-state">Nenhum profissional disponível.</p>';
+    grid.setAttribute("aria-busy", "false");
+  }
+
+  function renderHomePreviews() {
+    const plans = $("#home-plan-preview");
+    if (plans) {
+      plans.innerHTML = PLANS.slice(0, 2).map((plan) =>
+        '<a class="home-plan-item" href="planos.html"><span>' + escapeHTML(plan.name) + '</span><strong>' + money(plan.price) + ' / mês</strong></a>'
+      ).join("") || '<p class="empty-state">Nenhum plano disponível.</p>';
+      plans.setAttribute("aria-busy", "false");
+    }
+    const team = $("#home-team-preview");
+    if (team) {
+      const people = BARBERS.filter((person) => person.id !== "sem-preferencia").slice(0, 3);
+      team.innerHTML = people.map((person) =>
+        '<a class="home-team-item" href="agendar.html?barber=' + encodeURIComponent(person.id) + '"><span class="home-team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + '</span><span><strong>' + escapeHTML(person.name) + '</strong><br>' + escapeHTML(person.role) + '</span><span class="text-link">Agendar <span aria-hidden="true">→</span></span></a>'
+      ).join("") || '<p class="empty-state">Nenhum profissional disponível.</p>';
+      team.setAttribute("aria-busy", "false");
+    }
   }
 
   function localISO(date) {
@@ -268,6 +291,8 @@
     const plan = Number.isInteger(index) ? PLANS[index] : null;
     if (!plan) return;
     $("#booking-workflow").hidden = true;
+    const stickyBar = $("#booking-sticky-bar");
+    if (stickyBar) stickyBar.hidden = true;
     $("#plan-interest").hidden = false;
     $("#booking-page-title").textContent = "Consulte o Clube Castellari.";
     $("#booking-page-lead").textContent = "Veja os detalhes do plano selecionado e envie uma solicitação demonstrativa.";
@@ -300,20 +325,34 @@
       const items = SERVICES.filter((service) => service.category === category);
       const section = document.createElement("details");
       section.className = "booking-category";
-      section.open = index === 0 || items.some((service) => selected.has(service.id));
+      section.open = items.some((service) => selected.has(service.id));
       section.innerHTML = '<summary>' + escapeHTML(category) + ' <span>' + items.length + '</span></summary>' +
         '<div class="booking-service-list">' + items.map((service) =>
           '<label class="booking-choice" data-service-option="' + escapeHTML(service.id) + '">' +
           '<input type="checkbox" value="' + escapeHTML(service.id) + '"' + (selected.has(service.id) ? " checked" : "") + '>' +
-          '<span><strong>' + escapeHTML(service.name) + '</strong><small>' + escapeHTML(servicePrice(service)) + ' · ' + service.duration + ' min</small></span></label>'
+          '<span><strong>' + escapeHTML(service.name) + '</strong><small class="booking-service-meta"><span class="booking-service-price">' + escapeHTML(servicePrice(service)) + '</span><span class="booking-service-duration">' + service.duration + ' min</span></small></span></label>'
         ).join("") + '</div>';
       serviceRoot.appendChild(section);
     });
+    serviceRoot.setAttribute("aria-busy", "false");
+    const selectedCount = $("#selected-service-count");
+    if (selectedCount) selectedCount.textContent = selected.size + (selected.size === 1 ? " serviço selecionado" : " serviços selecionados");
+    function setStepper(activeStep) {
+      $$("[data-step-indicator]").forEach((item) => {
+        const number = Number(item.dataset.stepIndicator);
+        item.classList.toggle("is-complete", number < activeStep);
+        if (number === activeStep) item.setAttribute("aria-current", "step");
+        else item.removeAttribute("aria-current");
+      });
+    }
+    setStepper(selected.size ? 2 : 1);
     serviceRoot.addEventListener("change", (event) => {
       const input = event.target.closest("input[type=checkbox]");
       if (!input) return;
       if (input.checked) selected.add(input.value); else selected.delete(input.value);
+      if (selectedCount) selectedCount.textContent = selected.size + (selected.size === 1 ? " serviço selecionado" : " serviços selecionados");
       updateSummary();
+      setStepper(selected.size ? 2 : 1);
     });
     const search = $("#booking-service-search");
     if (search) search.addEventListener("input", () => {
@@ -343,30 +382,52 @@
     dayRoot.innerHTML = days.map((day) =>
       '<button type="button" class="choice-button" data-day="' + day.iso + '" aria-label="' + escapeHTML(day.full) + '" aria-pressed="false">' + escapeHTML(day.label) + '</button>'
     ).join("");
+    dayRoot.setAttribute("aria-busy", "false");
     dayRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-day]");
       if (!button) return;
       selectedDay = days.find((day) => day.iso === button.dataset.day);
       $$("[data-day]", dayRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
       updateSummary();
+      setStepper(3);
     });
 
     const timeRoot = $("#booking-times");
     timeRoot.innerHTML = TIME_SLOTS.map((time) =>
       '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="false">' + time + '</button>'
     ).join("");
+    timeRoot.setAttribute("aria-busy", "false");
     timeRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-time]");
       if (!button) return;
       selectedTime = button.dataset.time;
       $$("[data-time]", timeRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
       updateSummary();
+      setStepper(4);
     });
 
-    const barberSelectUpdate = () => updateSummary();
+    const barberSelectUpdate = () => { updateSummary(); setStepper(3); };
     barberSelect.addEventListener("change", barberSelectUpdate);
-    $("#client-name").addEventListener("input", updateSummary);
-    $("#client-phone").addEventListener("input", updateSummary);
+    $("#client-name").addEventListener("input", () => { updateSummary(); setStepper(4); });
+    $("#client-phone").addEventListener("input", () => { updateSummary(); setStepper(4); });
+
+    const continueButton = $("#booking-continue");
+    if (continueButton) continueButton.addEventListener("click", () => {
+      if (!selected.size) {
+        setStepper(1);
+        serviceRoot.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (!selectedDay || !selectedTime) {
+        setStepper(3);
+        (!selectedDay ? dayRoot : timeRoot).scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      setStepper(4);
+      $("[data-booking-step=\"4\"]").scrollIntoView({ behavior: "smooth", block: "center" });
+      if (form.checkValidity()) form.requestSubmit();
+      else form.reportValidity();
+    });
 
     function chosenServices() { return SERVICES.filter((service) => selected.has(service.id)); }
     function updateSummary() {
@@ -379,6 +440,8 @@
       $("#summary-date").textContent = selectedDay && selectedTime ? selectedDay.full + " · " + selectedTime : "Escolha data e horário";
       $("#summary-duration").textContent = duration ? duration + " min" : "—";
       $("#summary-total").textContent = money(total);
+      const stickyTotal = $("#booking-sticky-total");
+      if (stickyTotal) stickyTotal.textContent = money(total);
       $("#booking-error").hidden = true;
     }
     updateSummary();
@@ -404,18 +467,33 @@
       $("#success-professional").textContent = barber ? barber.name : "Sem preferência";
       $("#success-total").textContent = money(chosenServices().reduce((sum, service) => sum + service.price, 0));
       $("#booking-workflow").hidden = true;
+      const stickyBar = $("#booking-sticky-bar");
+      if (stickyBar) stickyBar.hidden = true;
       $("#booking-success").hidden = false;
       $("#booking-success").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  function initPhoneMasks() {
+    [$("#client-phone"), $("#plan-client-phone")].filter(Boolean).forEach((input) => {
+      input.addEventListener("input", () => {
+        let digits = input.value.replace(/\D/g, "");
+        if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+        digits = digits.slice(0, 11);
+        if (digits.length <= 2) input.value = digits ? "(" + digits : "";
+        else input.value = "(" + digits.slice(0, 2) + ") " + digits.slice(2, 7) + (digits.length > 7 ? "-" + digits.slice(7) : "");
+      });
     });
   }
   document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     initNavigation();
     renderFeaturedServices();
+    renderHomePreviews();
     renderCatalog();
     renderPlans();
     renderTeam();
     initBooking();
+    initPhoneMasks();
     const year = $("#current-year");
     if (year) year.textContent = String(new Date().getFullYear());
   });
