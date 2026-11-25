@@ -1,45 +1,48 @@
+const CATALOG_VERSION = 2;
+
 const SERVICES = [
-  // Cortes & Combos
-  { id: 'corte-novo', category: 'Cortes & Combos', name: 'Corte Premium (Clientes Novos)', price: 45, duration: 45, includesCut: true, badge: 'Primeira Visita', desc: 'Corte personalizado + lavagem e finalização para novos clientes.' },
-  { id: 'corte-premium', category: 'Cortes & Combos', name: 'Corte Premium', price: 60, duration: 45, includesCut: true, desc: 'Corte clássico ou moderno com acabamento na navalha e lavagem.' },
-  { id: 'combo-exp', category: 'Cortes & Combos', name: 'Combo Experiência Completa', price: 150, duration: 90, includesCut: true, badge: 'Mais Completo', desc: 'Corte Premium + Barboterapia completa + Hidratação e acabamento.' },
-  { id: 'combo-total', category: 'Cortes & Combos', name: 'Combo Cuidado Total', price: 135, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha e cuidados faciais essenciais.' },
-  { id: 'combo-premium', category: 'Cortes & Combos', name: 'Combo Premium', price: 110, duration: 60, includesCut: true, desc: 'Corte Premium + Barboterapia com toalha quente.' },
-  { id: 'combo-essencial', category: 'Cortes & Combos', name: 'Combo Essencial', price: 100, duration: 60, includesCut: true, desc: 'Corte + Barba Completa alinhada na navalha.' },
-  { id: 'combo-visual', category: 'Cortes & Combos', name: 'Combo Visual Completo', price: 130, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha + Limpeza facial.' },
-  { id: 'combo-rapido', category: 'Cortes & Combos', name: 'Combo Rápido e Eficiente', price: 100, duration: 50, includesCut: true, desc: 'Agilidade sem abrir mão do padrão Castellari.' },
-  { id: 'combo-pais', category: 'Cortes & Combos', name: 'Combo Pais em Dia', price: 100, duration: 60, includesCut: true, desc: 'Corte adulto + Corte infantil no mesmo atendimento.' },
-  { id: 'corte-infantil', category: 'Cortes & Combos', name: 'Corte Infantil', price: 60, duration: 40, includesCut: true, desc: 'Atendimento cuidadoso e estilizado para crianças.' },
-  { id: 'corte-feminino', category: 'Cortes & Combos', name: 'Corte Feminino', price: 70, duration: 60, includesCut: true, desc: 'Corte técnico e finalização personalizada.' },
+  // Cortes
+  { id: 'corte-novo', category: 'Cortes', name: 'Corte Premium (Clientes Novos)', price: 45, duration: 45, includesCut: true, featured: true, badge: 'Em alta', desc: 'Corte personalizado + lavagem e finalização para novos clientes.' },
+  { id: 'corte-premium', category: 'Cortes', name: 'Corte Premium', price: 50, duration: 45, includesCut: true, featured: true, desc: 'Corte clássico ou moderno com acabamento na navalha e lavagem.' },
+  { id: 'corte-infantil', category: 'Cortes', name: 'Corte Infantil', price: 60, duration: 40, includesCut: true, desc: 'Atendimento cuidadoso e estilizado para crianças.' },
+  { id: 'corte-feminino', category: 'Cortes', name: 'Corte Feminino', price: 70, duration: 60, includesCut: true, desc: 'Corte técnico e finalização personalizada.' },
+  { id: 'pezinho', category: 'Cortes', name: 'Pezinho', price: 25, duration: 15, includesCut: false, desc: 'Acabamento preciso nos contornos e nuca.' },
+
+  // Combos
+  { id: 'combo-exp', category: 'Combos', name: 'COMBO Experiência Completa', price: 250, duration: 90, includesCut: true, featured: true, badge: 'Em alta', desc: 'Corte Premium + Barboterapia completa + Hidratação e cuidados faciais.' },
+  { id: 'combo-premium', category: 'Combos', name: 'COMBO Premium', price: 210, duration: 75, includesCut: true, featured: true, desc: 'Corte Premium + Barboterapia com toalha quente e finalização.' },
+  { id: 'combo-total', category: 'Combos', name: 'Combo Cuidado Total', price: 210, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha e cuidados faciais essenciais.' },
+  { id: 'combo-essencial', category: 'Combos', name: 'Combo Essencial', price: 160, duration: 60, includesCut: true, featured: true, desc: 'Corte + Barba Completa alinhada na navalha.' },
+  { id: 'combo-corte-hidra-barba', category: 'Combos', name: 'COMBO Corte + Hidratação + Barboterapia', price: 160, duration: 75, includesCut: true, desc: 'Corte Premium combinado com hidratação capilar e barboterapia.' },
+  { id: 'combo-pele', category: 'Combos', name: 'Combo Pele em Dia', price: 160, duration: 60, includesCut: true, desc: 'Corte + cuidados faciais para limpeza e renovação da pele.' },
+  { id: 'combo-facial-cera', category: 'Combos', name: 'COMBO Terapia Facial + Depilação na Cera (Nariz e Ouvido)', price: 150, duration: 60, includesCut: false, desc: 'Cuidado estético facial completo com extração e depilação.' },
+  { id: 'combo-visual', category: 'Combos', name: 'Combo Visual Completo', price: 130, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha + Limpeza facial.' },
+  { id: 'combo-rapido', category: 'Combos', name: 'Combo Rápido e Eficiente', price: 100, duration: 50, includesCut: true, desc: 'Agilidade sem abrir mão do padrão Castellari.' },
 
   // Barba & Terapias
-  { id: 'barboterapia', category: 'Barba & Terapias', name: 'Barboterapia', price: 60, duration: 45, includesCut: false, badge: 'Clássico Italiano', desc: 'Toalha quente, massagem facial, óleos essenciais e navalha.' },
-  { id: 'barba-completa', category: 'Barba & Terapias', name: 'Barba Completa', price: 50, duration: 35, includesCut: false, desc: 'Modelagem, alinhamento e hidratação pós-barba.' },
+  { id: 'barboterapia', category: 'Barba & Terapias', name: 'Barboterapia', price: 80, duration: 45, includesCut: false, featured: true, desc: 'Toalha quente, massagem facial, óleos essenciais e navalha.' },
+  { id: 'barba-completa', category: 'Barba & Terapias', name: 'Barba Completa', price: 50, duration: 35, includesCut: false, featured: true, desc: 'Modelagem, alinhamento e hidratação pós-barba.' },
   { id: 'terapia-capilar', category: 'Barba & Terapias', name: 'Terapia Capilar (Bálsamo + Shampoo Deep Ice)', price: 70, duration: 40, includesCut: false, desc: 'Refrescância profunda e revitalização do couro cabeludo.' },
   { id: 'terapia-facial', category: 'Barba & Terapias', name: 'Terapia Facial com Extração de Cravos', price: 120, duration: 50, includesCut: false, desc: 'Limpeza profunda de poros e revitalização da pele.' },
-  { id: 'esfoliacao-facial', category: 'Barba & Terapias', name: 'Esfoliação Facial Anti Oleosidade', price: 50, duration: 30, includesCut: false, desc: 'Controle de oleosidade e renovação celular.' },
-  { id: 'lavagem-acidificante', category: 'Barba & Terapias', name: 'Lavagem Hidratante com Acidificante', price: 60, duration: 30, includesCut: false, desc: 'Equilíbrio de pH e brilho intenso aos fios.' },
   { id: 'hidratacao-capilar', category: 'Barba & Terapias', name: 'Hidratação Capilar', price: 50, duration: 30, includesCut: false, desc: 'Nutrição e maciez imediata para cabelos ressecados.' },
+  { id: 'esfoliacao-facial', category: 'Barba & Terapias', name: 'Esfoliação Facial Anti Oleosidade', price: 50, duration: 30, includesCut: false, desc: 'Controle de oleosidade e renovação celular.' },
+  { id: 'pigmentacao-barba', category: 'Barba & Terapias', name: 'Pigmentação de Barba', price: 50, duration: 30, includesCut: false, desc: 'Preenchimento visual e definição de contorno.' },
+  { id: 'micropigmentacao', category: 'Barba & Terapias', name: 'Preenchimento de Barba (Micro Pigmentação)', price: 450, duration: 90, includesCut: false, pricePrefix: 'A partir de ', desc: 'Técnica de longa duração para falhas na barba.' },
 
-  // Acabamento & Estética
-  { id: 'sobrancelha', category: 'Acabamento & Estética', name: 'Sobrancelha (Simples)', price: 30, duration: 20, includesCut: false, desc: 'Limpeza e alinhamento natural na pinça ou navalha.' },
-  { id: 'pezinho', category: 'Acabamento & Estética', name: 'Pezinho', price: 25, duration: 15, includesCut: false, desc: 'Acabamento preciso nos contornos e nuca.' },
-  { id: 'cera-nariz', category: 'Acabamento & Estética', name: 'Depilação na Cera (Nariz)', price: 30, duration: 15, includesCut: false, desc: 'Remoção rápida, higiênica e confortável.' },
-  { id: 'cera-ouvido', category: 'Acabamento & Estética', name: 'Depilação na Cera (Ouvido)', price: 30, duration: 15, includesCut: false, desc: 'Acabamento limpo e seguro.' },
-  { id: 'combo-facial-cera', category: 'Acabamento & Estética', name: 'Combo Terapia Facial + Depilação na Cera (Nariz e Ouvido)', price: 150, duration: 60, includesCut: false, desc: 'Cuidado estético facial completo.' },
-  { id: 'pigmentacao-barba', category: 'Acabamento & Estética', name: 'Pigmentação de Barba', price: 50, duration: 30, includesCut: false, desc: 'Preenchimento visual e definição de contorno.' },
-  { id: 'alinhamento-capilar', category: 'Acabamento & Estética', name: 'Alinhamento Capilar', price: 100, duration: 60, includesCut: false, desc: 'Redução de volume e controle de frizz.' },
-  { id: 'platinado', category: 'Acabamento & Estética', name: 'Platinado / Descoloração', price: 180, duration: 120, includesCut: false, desc: 'Descoloração global com proteção dos fios.' },
-  { id: 'pintura-capilar', category: 'Acabamento & Estética', name: 'Pintura Capilar', price: 100, duration: 60, includesCut: false, pricePrefix: 'A partir de ', desc: 'Tonalização ou cobertura natural dos fios.' },
-  { id: 'micropigmentacao', category: 'Acabamento & Estética', name: 'Preenchimento de Barba (Micropigmentação)', price: 400, duration: 90, includesCut: false, pricePrefix: 'A partir de ', desc: 'Técnica de longa duração para falhas na barba.' },
-  { id: 'visagismo', category: 'Acabamento & Estética', name: 'Consultoria de Imagem (Visagismo)', price: 150, duration: 60, includesCut: false, desc: 'Estudo de formato de rosto e estilo ideal.' },
-  { id: 'desenho', category: 'Acabamento & Estética', name: 'Desenho (Freestyle)', price: 25, duration: 20, includesCut: false, pricePrefix: 'A partir de ', desc: 'Riscos e arte personalizada no corte.' },
+  // Estética & Química
+  { id: 'sobrancelha', category: 'Estética & Química', name: 'Sobrancelha (limpeza)', price: 20, duration: 20, includesCut: false, featured: true, desc: 'Limpeza e alinhamento natural na pinça ou navalha.' },
+  { id: 'cera-nariz', category: 'Estética & Química', name: 'Depilação na Cera (Nariz)', price: 30, duration: 15, includesCut: false, desc: 'Remoção rápida, higiênica e confortável.' },
+  { id: 'cera-ouvido', category: 'Estética & Química', name: 'Depilação na Cera (Ouvido)', price: 30, duration: 15, includesCut: false, desc: 'Acabamento limpo e seguro.' },
+  { id: 'desenho', category: 'Estética & Química', name: 'Desenho', price: 25, duration: 20, includesCut: false, pricePrefix: 'A partir de ', desc: 'Riscos e arte personalizada no corte.' },
+  { id: 'pintura-capilar', category: 'Estética & Química', name: 'Pintura Capilar', price: 150, duration: 60, includesCut: false, pricePrefix: 'A partir de ', desc: 'Tonalização ou cobertura natural dos fios.' },
+  { id: 'alinhamento-capilar', category: 'Estética & Química', name: 'Alinhamento Capilar', price: 160, duration: 60, includesCut: false, desc: 'Redução de volume e controle de frizz.' },
+  { id: 'platinado', category: 'Estética & Química', name: 'Platinado/Descoloração', price: 180, duration: 120, includesCut: false, desc: 'Descoloração global com proteção dos fios.' },
 
-  // Adicionais (UP)
-  { id: 'up-sobrancelha', category: 'Adicionais (UP)', name: 'UP - Sobrancelha', price: 20, duration: 15, includesCut: false, desc: 'Adicional promocional para incluir no seu atendimento.' },
-  { id: 'up-hidratacao', category: 'Adicionais (UP)', name: 'UP - Hidratação', price: 40, duration: 20, includesCut: false, desc: 'Adicional de hidratação rápida no lavatório.' },
-  { id: 'up-corte', category: 'Adicionais (UP)', name: 'UP - Corte', price: 50, duration: 40, includesCut: true, desc: 'Upgrade de corte adicionado ao pacote.' },
-  { id: 'up-barboterapia', category: 'Adicionais (UP)', name: 'UP - Barboterapia', price: 50, duration: 35, includesCut: false, desc: 'Upgrade de barboterapia com toalha quente.' },
+  // Clube VIP
+  { id: 'vip-corte', category: 'Clube VIP', name: 'VIP - CORTE', price: 70, duration: 45, includesCut: true, desc: 'Serviço exclusivo para assinantes ou atendimento VIP.' },
+  { id: 'vip-barboterapia', category: 'Clube VIP', name: 'VIP - BARBOTERAPIA', price: 80, duration: 45, includesCut: false, desc: 'Barboterapia completa no padrão VIP Castellari.' },
+  { id: 'vip-hidratacao', category: 'Clube VIP', name: 'VIP - HIDRATAÇÃO', price: 50, duration: 30, includesCut: false, desc: 'Hidratação capilar no lavatório.' },
+  { id: 'vip-sobrancelha', category: 'Clube VIP', name: 'VIP - SOBRANCELHA', price: 20, duration: 15, includesCut: false, desc: 'Limpeza e alinhamento de sobrancelha.' },
 ];
 
 const PLANS = [
@@ -112,4 +115,4 @@ const BARBERS = [
   { id: 'sem-preferencia', name: 'Sem preferência', initials: '★', featured: false, role: 'Primeiro disponível', photo: null },
 ];
 
-window.CastellariData = { SERVICES, PLANS, BARBERS };
+window.CastellariData = { SERVICES, PLANS, BARBERS, CATALOG_VERSION };

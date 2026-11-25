@@ -81,15 +81,18 @@
           <label for="booking-service-search">Buscar serviço</label>
           <input id="booking-service-search" type="search" placeholder="Ex.: corte, barba, terapia" autocomplete="off">
         </div>
-        <p class="selected-service-count" id="selected-service-count" aria-live="polite">0 serviços selecionados</p>
+        <div class="booking-service-tabs" id="booking-service-tabs" role="tablist" aria-label="Categorias de serviços"></div>
+        <div class="selected-services-bar">
+          <p class="selected-service-count" id="selected-service-count" aria-live="polite">0 serviços selecionados</p>
+          <div class="selected-services-chips" id="selected-services-chips" hidden></div>
+        </div>
         <div class="booking-duplication-alert" id="booking-duplication-alert" role="status" hidden>
           <span>Você selecionou um combo que já inclui corte junto com um corte avulso.</span>
           <button class="button button-small button-outline" id="remove-duplicate-cut" type="button">Remover corte avulso</button>
         </div>
         <div class="booking-services" id="booking-services" aria-busy="true"></div>
-        <p id="booking-error" class="booking-error" role="alert" hidden></p>
         <div class="step-nav-row step-nav-end">
-          <button type="button" class="button" id="btn-step-1-next" disabled>Escolher profissional →</button>
+          <button type="button" class="button" id="btn-step-1-next">Próximo →</button>
         </div>
       </section>
 
@@ -105,7 +108,7 @@
         <select class="choice-select" id="booking-barber" name="barber" hidden></select>
         <div class="step-nav-row">
           <button type="button" class="button button-outline" data-step-back="1">← Voltar</button>
-          <button type="button" class="button" id="btn-step-2-next">Escolher data e horário →</button>
+          <button type="button" class="button" id="btn-step-2-next">Próximo →</button>
         </div>
       </section>
 
@@ -122,7 +125,7 @@
         <div class="choice-grid" id="booking-times" aria-label="Horários disponíveis" aria-busy="true"></div>
         <div class="step-nav-row">
           <button type="button" class="button button-outline" data-step-back="2">← Voltar</button>
-          <button type="button" class="button" id="btn-step-3-next" disabled>Revisar agendamento →</button>
+          <button type="button" class="button" id="btn-step-3-next">Próximo →</button>
         </div>
       </section>
 
@@ -161,10 +164,15 @@
           <button class="button submit-booking" type="submit">Confirmar agendamento →</button>
         </div>
       </section>
+      <p id="booking-error" class="booking-error" role="alert" hidden></p>
     </form>
-    <aside class="booking-summary" aria-live="polite"><span class="demo-label">Resumo demonstrativo</span><h2>Seu atendimento</h2><div class="summary-line"><span>Serviços</span><strong id="summary-services">Selecione um serviço</strong></div><div class="summary-line"><span>Profissional</span><strong id="summary-professional">Sem preferência</strong></div><div class="summary-line"><span>Data e horário</span><strong id="summary-date">Escolha data e horário</strong></div><div class="summary-line"><span>Duração estimada</span><strong id="summary-duration">—</strong></div><div class="summary-total"><span>Valor estimado</span><strong id="summary-total">R$ 0,00</strong></div><p class="summary-disclaimer">Valores e disponibilidade serão confirmados pela equipe na versão conectada.</p></aside>
+    <aside class="booking-summary" aria-live="polite"><span class="demo-label">Resumo do atendimento</span><h2>Seu atendimento</h2><div class="summary-line"><span>Serviços</span><strong id="summary-services">Selecione um serviço</strong></div><div class="summary-line"><span>Profissional</span><strong id="summary-professional">Escolha um profissional</strong></div><div class="summary-line"><span>Data e horário</span><strong id="summary-date">Escolha data e horário</strong></div><div class="summary-line"><span>Duração estimada</span><strong id="summary-duration">—</strong></div><div class="summary-total"><span>Valor estimado</span><strong id="summary-total">R$ 0,00</strong></div></aside>
   </div>
-  <div class="booking-sticky-bar" id="booking-sticky-bar"><div><span>Valor estimado</span><strong id="booking-sticky-total">R$ 0,00</strong></div><button class="button" id="booking-continue" type="button">Continuar <span aria-hidden="true">→</span></button></div>
+  <div class="booking-sticky-bar" id="booking-sticky-bar">
+    <button class="button button-outline" id="booking-prev" type="button">← Voltar</button>
+    <button class="button" id="booking-continue" type="button">Próximo →</button>
+  </div>
+  <div class="booking-toast" id="booking-toast" role="alert" hidden></div>
   <section class="booking-success" id="booking-success" hidden><span class="eyebrow">Agendamento registrado</span><h2>Obrigado, <span id="success-name"></span>.</h2><p id="success-code">Sua solicitação foi registrada com sucesso.</p><div class="summary-line"><span>Serviços</span><strong id="success-services"></strong></div><div class="summary-line"><span>Profissional</span><strong id="success-professional"></strong></div><div class="summary-line"><span>Data e horário</span><strong id="success-date"></strong></div><div class="summary-total"><span>Valor estimado</span><strong id="success-total"></strong></div><div class="record-actions"><a class="button button-small" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="servicos.html">Voltar ao catálogo</a></div></section>
   <section class="booking-block plan-interest" id="plan-interest" hidden><span class="eyebrow">Clube Castellari</span><h2 id="plan-interest-heading">Consultar um plano</h2><p id="plan-interest-details"></p><div class="booking-duplication-alert" id="plan-auth-box"><span>Entre com sua conta para registrar a solicitação do plano.</span><div class="record-actions"><button type="button" class="button button-small" id="plan-google-login">Entrar com Google</button><a class="button button-small button-outline" href="conta.html">E-mail / Criar conta</a></div></div><div class="plan-interest-box"><strong id="plan-interest-name"></strong><span id="plan-interest-price"></span></div><form id="plan-interest-form" class="booking-form"><div class="form-grid"><div class="field"><label for="plan-client-name">Nome</label><input id="plan-client-name" type="text" autocomplete="name" required></div><div class="field"><label for="plan-client-phone">WhatsApp</label><input id="plan-client-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(92) 99999-9999" required></div></div><button class="button" type="submit">Enviar solicitação <span aria-hidden="true">→</span></button></form></section>
   <section class="booking-success" id="plan-interest-success" hidden><span class="eyebrow">Solicitação enviada</span><h2>Obrigado, <span id="plan-success-name"></span>.</h2><p id="plan-success-note">Registramos seu interesse no plano <strong id="plan-success-title"></strong>.</p><div class="record-actions"><a class="button button-small" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="planos.html">Voltar aos planos</a></div></section>

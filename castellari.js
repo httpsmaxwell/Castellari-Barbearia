@@ -447,24 +447,117 @@
     let selectedTime = TIME_SLOTS.includes(saved.selectedTime) ? saved.selectedTime : null;
 
     const serviceRoot = $("#booking-services");
-    serviceRoot.innerHTML = "";
-    CATEGORIES.forEach((category) => {
-      const items = SERVICES.filter((service) => service.category === category);
-      const section = document.createElement("details");
-      section.className = "booking-category";
-      section.open = items.some((service) => selected.has(service.id));
-      section.innerHTML =
-        "<summary>" + escapeHTML(category) + " <span>" + items.length + "</span></summary>" +
-        '<div class="booking-service-list">' +
-        items.map((service) =>
-          '<label class="booking-choice" data-service-option="' + escapeHTML(service.id) + '">' +
-          '<input type="checkbox" value="' + escapeHTML(service.id) + '"' + (selected.has(service.id) ? " checked" : "") + ">" +
-          "<span><strong>" + escapeHTML(service.name) + '</strong><small class="booking-service-meta"><span class="booking-service-price">' + escapeHTML(servicePrice(service)) + '</span><span class="booking-service-duration">' + service.duration + " min</span></small></span></label>"
-        ).join("") +
-        "</div>";
-      serviceRoot.appendChild(section);
-    });
-    serviceRoot.setAttribute("aria-busy", "false");
+    const serviceTabsRoot = $("#booking-service-tabs");
+    const selectedChipsRoot = $("#selected-services-chips");
+    const searchInput = $("#booking-service-search");
+    let activeServiceTab = "featured";
+
+    function showBookingAlert(msg) {
+      const errEl = $("#booking-error");
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = msg;
+      }
+      const toast = $("#booking-toast");
+      if (toast) {
+        toast.textContent = msg;
+        toast.hidden = false;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+          toast.hidden = true;
+        }, 3600);
+      }
+    }
+
+    function clearBookingAlert() {
+      const errEl = $("#booking-error");
+      if (errEl) errEl.hidden = true;
+      const toast = $("#booking-toast");
+      if (toast) toast.hidden = true;
+    }
+
+    function renderSelectedChips() {
+      if (!selectedChipsRoot) return;
+      const chosen = SERVICES.filter((s) => selected.has(s.id));
+      if (!chosen.length) {
+        selectedChipsRoot.hidden = true;
+        selectedChipsRoot.innerHTML = "";
+        return;
+      }
+      selectedChipsRoot.hidden = false;
+      selectedChipsRoot.innerHTML = chosen.map((s) =>
+        '<button type="button" class="selected-chip" data-remove-service="' + escapeHTML(s.id) + '" aria-label="Remover ' + escapeHTML(s.name) + '">' +
+        escapeHTML(s.name) + ' <span aria-hidden="true">×</span></button>'
+      ).join("");
+    }
+
+    function renderServiceTabs() {
+      if (!serviceTabsRoot) return;
+      const tabs = [
+        { key: "featured", label: "Em Alta" },
+        ...CATEGORIES.map((c) => ({ key: c, label: c })),
+        { key: "all", label: "Todos" },
+      ];
+      serviceTabsRoot.innerHTML = tabs.map((t) =>
+        '<button type="button" role="tab" class="service-tab-pill' + (activeServiceTab === t.key ? " is-active" : "") + '" data-service-tab="' + escapeHTML(t.key) + '" aria-selected="' + String(activeServiceTab === t.key) + '">' + escapeHTML(t.label) + "</button>"
+      ).join("");
+    }
+
+    function renderServiceList() {
+      if (!serviceRoot) return;
+      const query = searchInput ? normalize(searchInput.value) : "";
+      let items = SERVICES;
+      if (query) {
+        items = SERVICES.filter((s) => normalize(s.name + " " + s.desc + " " + s.category).includes(query));
+      } else if (activeServiceTab === "featured") {
+        items = SERVICES.filter((s) => s.featured);
+        if (!items.length) items = SERVICES.slice(0, 8);
+      } else if (activeServiceTab !== "all") {
+        items = SERVICES.filter((s) => s.category === activeServiceTab);
+      }
+
+      serviceRoot.innerHTML = items.length
+        ? '<div class="booking-service-list">' +
+          items.map((service) =>
+            '<label class="booking-choice' + (selected.has(service.id) ? " is-checked" : "") + '" data-service-option="' + escapeHTML(service.id) + '">' +
+            '<input type="checkbox" value="' + escapeHTML(service.id) + '"' + (selected.has(service.id) ? " checked" : "") + ">" +
+            '<span class="booking-choice-body">' +
+            '<strong class="booking-choice-title">' + escapeHTML(service.name) + (service.badge ? ' <em class="service-inline-badge">' + escapeHTML(service.badge) + "</em>" : "") + "</strong>" +
+            '<small class="booking-service-meta"><span class="booking-service-price">' + escapeHTML(servicePrice(service)) + '</span><span class="booking-service-duration">' + service.duration + " min</span></small>" +
+            "</span></label>"
+          ).join("") +
+          "</div>"
+        : '<p class="empty-state">Nenhum serviço encontrado para essa busca.</p>';
+      serviceRoot.setAttribute("aria-busy", "false");
+    }
+
+    renderServiceTabs();
+    renderServiceList();
+    renderSelectedChips();
+
+    if (serviceTabsRoot) {
+      serviceTabsRoot.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-service-tab]");
+        if (!btn) return;
+        activeServiceTab = btn.dataset.serviceTab;
+        if (searchInput && searchInput.value) searchInput.value = "";
+        renderServiceTabs();
+        renderServiceList();
+      });
+    }
+
+    if (selectedChipsRoot) {
+      selectedChipsRoot.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-remove-service]");
+        if (!btn) return;
+        selected.delete(btn.dataset.removeService);
+        updateSelectedCount();
+        renderSelectedChips();
+        renderServiceList();
+        persistBooking();
+        updateSummary();
+      });
+    }
 
     const selectedCount = $("#selected-service-count");
     const updateSelectedCount = () => {
@@ -476,18 +569,49 @@
 
     let currentStep = 1;
 
+    function scrollToActiveStep() {
+      const targetEl = $(".booking-stepper") || $("#booking-form");
+      if (!targetEl) return;
+      const header = $(".site-header");
+      const offset = (header ? header.offsetHeight : 60) + 8;
+      const top = targetEl.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+
+    const barberSelect = $("#booking-barber");
+    function populateBarberSelect(preferredId) {
+      barberSelect.innerHTML =
+        '<option value="">Selecione um profissional...</option>' +
+        BARBERS.map((person) =>
+          '<option value="' + escapeHTML(person.id) + '">' + escapeHTML(person.name === "Sem preferência" ? person.name : person.name + " · " + person.role) + "</option>"
+        ).join("");
+      if (preferredId && BARBERS.some((person) => person.id === preferredId)) {
+        barberSelect.value = preferredId;
+      } else {
+        barberSelect.value = "";
+      }
+    }
+    populateBarberSelect(
+      BARBERS.some((p) => p.id === firstBarber) ? firstBarber :
+      (BARBERS.some((p) => p.id === saved.barberId) ? saved.barberId : "")
+    );
+
     function goToStep(stepNumber, scroll = true) {
       const target = Math.max(1, Math.min(4, stepNumber));
       if (target > 1 && selected.size === 0) {
-        $("#booking-error").hidden = false;
-        $("#booking-error").textContent = "Escolha pelo menos um serviço antes de avançar.";
+        showBookingAlert("Você ainda não selecionou nenhum serviço. Escolha pelo menos 1 serviço para continuar.");
         currentStep = 1;
-      } else if (target === 4 && (!selectedDay || !selectedTime)) {
-        $("#booking-error").hidden = false;
-        $("#booking-error").textContent = "Escolha a data e o horário antes de avançar.";
+      } else if (target > 2 && !barberSelect.value) {
+        showBookingAlert("Você ainda não selecionou o profissional. Escolha um barbeiro ou 'Sem preferência'.");
+        currentStep = 2;
+      } else if (target === 4 && !selectedDay) {
+        showBookingAlert("Você ainda não selecionou a data. Escolha um dia disponível para continuar.");
+        currentStep = 3;
+      } else if (target === 4 && !selectedTime) {
+        showBookingAlert("Você ainda não selecionou o horário. Escolha um horário disponível para continuar.");
         currentStep = 3;
       } else {
-        $("#booking-error").hidden = true;
+        clearBookingAlert();
         currentStep = target;
       }
 
@@ -504,25 +628,10 @@
       });
 
       if (scroll) {
-        const formEl = $("#booking-form");
-        if (formEl) {
-          formEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        scrollToActiveStep();
       }
 
       updateSummary();
-    }
-
-    const barberSelect = $("#booking-barber");
-    barberSelect.innerHTML = BARBERS.map((person) =>
-      '<option value="' + escapeHTML(person.id) + '">' + escapeHTML(person.name === "Sem preferência" ? person.name : person.name + " · " + person.role) + "</option>"
-    ).join("");
-    if (BARBERS.some((person) => person.id === firstBarber)) {
-      barberSelect.value = firstBarber;
-    } else if (BARBERS.some((person) => person.id === saved.barberId)) {
-      barberSelect.value = saved.barberId;
-    } else {
-      barberSelect.value = "sem-preferencia";
     }
 
     const barbersGrid = $("#booking-barbers-grid");
@@ -648,18 +757,16 @@
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
 
       $("#summary-services").textContent = services.length ? services.map((service) => service.name).join(", ") : "Selecione um serviço";
-      $("#summary-professional").textContent = barber ? barber.name : "Sem preferência";
+      $("#summary-professional").textContent = barber ? barber.name : "Escolha um profissional";
       $("#summary-date").textContent = selectedDay && selectedTime ? selectedDay.full + " · " + selectedTime : "Escolha data e horário";
       $("#summary-duration").textContent = duration ? duration + " min" : "—";
       $("#summary-total").textContent = money(total);
-      const stickyTotal = $("#booking-sticky-total");
-      if (stickyTotal) stickyTotal.textContent = money(total);
 
       // Atualiza o resumo da etapa 4
       const recapSrv = $("#recap-services");
       if (recapSrv) recapSrv.textContent = services.length ? services.map((s) => s.name).join(", ") : "Nenhum";
       const recapBarber = $("#recap-barber");
-      if (recapBarber) recapBarber.textContent = barber ? barber.name : "Sem preferência";
+      if (recapBarber) recapBarber.textContent = barber ? barber.name : "Escolha um profissional";
       const recapDt = $("#recap-datetime");
       if (recapDt) recapDt.textContent = selectedDay && selectedTime ? selectedDay.full + " às " + selectedTime : "Escolha data e horário";
       const recapDur = $("#recap-duration");
@@ -667,35 +774,27 @@
       const recapTot = $("#recap-total");
       if (recapTot) recapTot.textContent = money(total);
 
-      // Atualiza botões de avançar das etapas
+      // Botões das etapas (mantidos ativos para exibir aviso claro se faltar seleção)
       if (btnStep1Next) {
-        btnStep1Next.disabled = selected.size === 0;
         btnStep1Next.textContent = selected.size
-          ? "Continuar para Profissional (" + selected.size + " selecionado" + (selected.size > 1 ? "s" : "") + ") →"
-          : "Escolha pelo menos 1 serviço →";
+          ? "Próximo (" + selected.size + " selecionado" + (selected.size > 1 ? "s" : "") + ") →"
+          : "Próximo →";
       }
-      if (btnStep3Next) {
-        btnStep3Next.disabled = !selectedDay || !selectedTime;
+
+      const prevBtn = $("#booking-prev");
+      if (prevBtn) {
+        prevBtn.disabled = currentStep === 1;
       }
 
       const continueBtn = $("#booking-continue");
       if (continueBtn) {
-        if (currentStep === 1) {
-          continueBtn.textContent = "Continuar →";
-          continueBtn.disabled = selected.size === 0;
-        } else if (currentStep === 2) {
-          continueBtn.textContent = "Data e Horário →";
-          continueBtn.disabled = false;
-        } else if (currentStep === 3) {
-          continueBtn.textContent = "Revisar →";
-          continueBtn.disabled = !selectedDay || !selectedTime;
-        } else {
+        if (currentStep === 4) {
           continueBtn.textContent = "Confirmar →";
-          continueBtn.disabled = false;
+        } else {
+          continueBtn.textContent = "Próximo →";
         }
+        continueBtn.disabled = false;
       }
-
-      $("#booking-error").hidden = true;
 
       if (duplicationAlert) {
         const hasDuplicateCut = services.some(isComboWithCut) && services.some(isStandaloneCut);
@@ -708,7 +807,11 @@
       if (!input) return;
       if (input.checked) selected.add(input.value);
       else selected.delete(input.value);
+      const label = input.closest(".booking-choice");
+      if (label) label.classList.toggle("is-checked", input.checked);
+      clearBookingAlert();
       updateSelectedCount();
+      renderSelectedChips();
       persistBooking();
       updateSummary();
     });
@@ -717,30 +820,18 @@
       removeDuplicateCutBtn.addEventListener("click", () => {
         chosenServices().filter(isStandaloneCut).forEach((service) => {
           selected.delete(service.id);
-          const checkbox = $('input[value="' + service.id + '"]', serviceRoot);
-          if (checkbox) checkbox.checked = false;
         });
         updateSelectedCount();
+        renderSelectedChips();
+        renderServiceList();
         persistBooking();
         updateSummary();
       });
     }
 
-    const search = $("#booking-service-search");
-    if (search) {
-      search.addEventListener("input", () => {
-        const query = normalize(search.value);
-        $$(".booking-category", serviceRoot).forEach((section) => {
-          let visible = 0;
-          $$("[data-service-option]", section).forEach((option) => {
-            const service = SERVICES.find((item) => item.id === option.dataset.serviceOption);
-            const show = !query || normalize(service.name + " " + service.desc).includes(query);
-            option.hidden = !show;
-            if (show) visible += 1;
-          });
-          section.hidden = visible === 0;
-          if (query && visible) section.open = true;
-        });
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        renderServiceList();
       });
     }
 
@@ -753,6 +844,7 @@
       if (dateLabel && selectedDay) {
         dateLabel.textContent = "Horários em " + selectedDay.full + ":";
       }
+      clearBookingAlert();
       persistBooking();
       updateSummary();
       refreshAvailability();
@@ -763,6 +855,7 @@
       if (!button || button.disabled) return;
       selectedTime = button.dataset.time;
       $$("[data-time]", timeRoot).forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      clearBookingAlert();
       persistBooking();
       updateSummary();
       // Auto-avanço para o passo 4 (revisão e confirmação)
@@ -770,6 +863,7 @@
     });
 
     barberSelect.addEventListener("change", () => {
+      clearBookingAlert();
       renderBarbersGrid();
       persistBooking();
       updateSummary();
@@ -789,9 +883,15 @@
         try {
           await fb().signInWithGoogle();
         } catch (err) {
-          $("#booking-error").hidden = false;
-          $("#booking-error").textContent = fb().formatFirebaseError(err);
+          showBookingAlert(fb().formatFirebaseError(err));
         }
+      });
+    }
+
+    const prevButton = $("#booking-prev");
+    if (prevButton) {
+      prevButton.addEventListener("click", () => {
+        if (currentStep > 1) goToStep(currentStep - 1);
       });
     }
 
@@ -811,8 +911,23 @@
       });
     }
 
-    // Inicializa a primeira etapa visível
-    goToStep(selected.size ? (selectedDay && selectedTime ? 4 : 2) : 1, false);
+    window.addEventListener("castellari:catalog-updated", () => {
+      renderServiceTabs();
+      renderServiceList();
+      renderSelectedChips();
+      populateBarberSelect(barberSelect.value);
+      renderBarbersGrid();
+      updateSummary();
+    });
+
+    // Inicializa sempre na etapa correspondente sem bloquear se faltou algo
+    let initialStep = 1;
+    if (selected.size > 0) {
+      if (!barberSelect.value) initialStep = 2;
+      else if (!selectedDay || !selectedTime) initialStep = 3;
+      else initialStep = 4;
+    }
+    goToStep(initialStep, false);
     persistBooking();
     updateSummary();
     refreshAvailability();
@@ -940,21 +1055,30 @@
 
     const remote = await api.loadCatalogFromFirestore();
     let updated = false;
-    if (remote.services) {
+    const remoteVersion = remote.settings && remote.settings.catalogVersion ? Number(remote.settings.catalogVersion) : 1;
+    const localVersion = Number(data.CATALOG_VERSION || 1);
+    if (remote.services && remoteVersion >= localVersion) {
       SERVICES = remote.services;
       CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
       updated = true;
     }
-    if (remote.plans) {
+    if (remote.plans && remoteVersion >= localVersion) {
       PLANS = remote.plans;
       updated = true;
     }
     if (remote.barbers) {
-      BARBERS = remote.barbers;
+      BARBERS = remote.barbers.map((rb) => {
+        const local = (data.BARBERS || []).find((lb) => lb.id === rb.id);
+        return {
+          ...rb,
+          photo: rb.photo || (local ? local.photo : null),
+        };
+      });
       updated = true;
     }
     if (updated) {
       renderAllViews();
+      window.dispatchEvent(new CustomEvent("castellari:catalog-updated"));
     }
   }
 

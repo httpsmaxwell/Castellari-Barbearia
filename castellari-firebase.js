@@ -406,6 +406,7 @@ export async function seedCatalogFromLocal(localData) {
       unit: "Planalto · Manaus, AM",
       days: "Segunda a sábado",
       hours: "09h às 19h",
+      catalogVersion: localData.CATALOG_VERSION || 2,
       updatedAt: serverTimestamp(),
     },
     { merge: true }
