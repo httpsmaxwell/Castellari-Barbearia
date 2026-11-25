@@ -14,16 +14,16 @@
   <meta property="og:image" content="https://castellari-barbearia.netlify.app/castellari-og.svg">
   <meta property="og:type" content="website">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"LocalBusiness","name":"Barbearia Castellari","address":{"@type":"PostalAddress","addressLocality":"Planalto, Manaus","addressRegion":"AM","addressCountry":"BR"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"09:00","closes":"19:00"}]}
+  {"@context":"https://schema.org","@type":"BarberShop","name":"Barbearia Castellari","telephone":"+559285803578","address":{"@type":"PostalAddress","streetAddress":"Avenida Desembargador João Machado, 15B","addressLocality":"Manaus","addressRegion":"AM","postalCode":"69044-000","addressCountry":"BR"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"09:00","closes":"20:00"}]}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=4">
-  <script src="castellari-data.js?v=4" defer></script>
-  <script type="module" src="castellari-firebase.js?v=4"></script>
-  <script src="castellari.js?v=4" defer></script>
+  <link rel="stylesheet" href="castellari.css?v=5">
+  <script src="castellari-data.js?v=5" defer></script>
+  <script type="module" src="castellari-firebase.js?v=5"></script>
+  <script src="castellari.js?v=5" defer></script>
 </head>
 <body data-page="home">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -63,7 +63,7 @@
       <h1 class="display-title">Clássico no estilo. Atual no cuidado.</h1>
       <p class="lead">Cortes e cuidados pessoais com tradição italiana e um olhar contemporâneo.</p>
       <div class="hero-actions"><a class="button hero-booking-button" href="agendar.html">Agendar horário <span aria-hidden="true">→</span></a><a class="button button-light" href="servicos.html">Ver serviços</a></div>
-      <div class="hero-meta"><div><strong>ONDE</strong>Planalto · Manaus/AM</div><div><strong>HORÁRIO</strong>Seg. a sáb. · 09h às 19h</div></div>
+      <div class="hero-meta"><div><strong>ONDE</strong>Av. Des. João Machado, 15B · Planalto</div><div><strong>HORÁRIO</strong>Seg. a sáb. · 09h às 20h</div></div>
     </div>
     <div class="hero-visual" role="img" aria-label="Monograma Castellari em uma composição inspirada na barbearia clássica">
       <span class="hero-letter" aria-hidden="true">C</span><span class="hero-stamp">Tradizione<br>e cura</span>
@@ -92,18 +92,20 @@
           <span class="brand-mark" aria-hidden="true"><span>C</span></span>
           <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
         </a>
-        <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica e feito para a vida de hoje.</p>
+        <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica italiana e feito para a vida de hoje.</p>
       </div>
       <div>
-        <p class="footer-heading">Unidade</p>
+        <p class="footer-heading">Unidade Planalto</p>
         <div class="footer-links">
-          <span>Planalto · Manaus, AM</span>
-          <span>Segunda a sábado</span>
-          <span>09h às 19h</span>
+          <span>Av. Desembargador João Machado, 15B</span>
+          <span>Planalto · Manaus, AM — CEP 69044-000</span>
+          <span>Segunda a sábado · 09h às 20h</span>
+          <a href="https://wa.me/559285803578" target="_blank" rel="noopener">WhatsApp: (92) 8580-3578</a>
+          <a href="https://instagram.com/castellaribarbearia" target="_blank" rel="noopener">Instagram: @castellaribarbearia</a>
         </div>
       </div>
     </div>
-    <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span> · Conteúdo demonstrativo</span></div>
+    <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span></span></div>
   </div>
 </footer>
 <script>window.setTimeout(function(){document.querySelectorAll('[aria-busy="true"]').forEach(function(list){if(list.querySelector('.skeleton-card,.skeleton-line')){list.setAttribute('aria-busy','false');var message=document.createElement('p');message.className='empty-state';message.textContent='Não foi possível carregar este conteúdo.';list.replaceChildren(message);}});},8000);</script>

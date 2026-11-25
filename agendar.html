@@ -17,10 +17,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=4">
-  <script src="castellari-data.js?v=4" defer></script>
-  <script type="module" src="castellari-firebase.js?v=4"></script>
-  <script src="castellari.js?v=4" defer></script>
+  <link rel="stylesheet" href="castellari.css?v=5">
+  <script src="castellari-data.js?v=5" defer></script>
+  <script type="module" src="castellari-firebase.js?v=5"></script>
+  <script src="castellari.js?v=5" defer></script>
 </head>
 <body data-page="booking">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -173,7 +173,7 @@
     <button class="button" id="booking-continue" type="button">Próximo →</button>
   </div>
   <div class="booking-toast" id="booking-toast" role="alert" hidden></div>
-  <section class="booking-success" id="booking-success" hidden><span class="eyebrow">Agendamento registrado</span><h2>Obrigado, <span id="success-name"></span>.</h2><p id="success-code">Sua solicitação foi registrada com sucesso.</p><div class="summary-line"><span>Serviços</span><strong id="success-services"></strong></div><div class="summary-line"><span>Profissional</span><strong id="success-professional"></strong></div><div class="summary-line"><span>Data e horário</span><strong id="success-date"></strong></div><div class="summary-total"><span>Valor estimado</span><strong id="success-total"></strong></div><div class="record-actions"><a class="button button-small" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="servicos.html">Voltar ao catálogo</a></div></section>
+  <section class="booking-success" id="booking-success" hidden><span class="eyebrow">Agendamento registrado</span><h2>Obrigado, <span id="success-name"></span>.</h2><p id="success-code">Sua solicitação foi registrada com sucesso.</p><div class="summary-line"><span>Serviços</span><strong id="success-services"></strong></div><div class="summary-line"><span>Profissional</span><strong id="success-professional"></strong></div><div class="summary-line"><span>Data e horário</span><strong id="success-date"></strong></div><div class="summary-total"><span>Valor estimado</span><strong id="success-total"></strong></div><div class="record-actions"><a class="button button-small" id="success-whatsapp-btn" href="#" target="_blank" rel="noopener">Abrir no WhatsApp</a><a class="button button-small button-outline" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="servicos.html">Voltar ao catálogo</a></div></section>
   <section class="booking-block plan-interest" id="plan-interest" hidden><span class="eyebrow">Clube Castellari</span><h2 id="plan-interest-heading">Consultar um plano</h2><p id="plan-interest-details"></p><div class="booking-duplication-alert" id="plan-auth-box"><span>Entre com sua conta para registrar a solicitação do plano.</span><div class="record-actions"><button type="button" class="button button-small" id="plan-google-login">Entrar com Google</button><a class="button button-small button-outline" href="conta.html">E-mail / Criar conta</a></div></div><div class="plan-interest-box"><strong id="plan-interest-name"></strong><span id="plan-interest-price"></span></div><form id="plan-interest-form" class="booking-form"><div class="form-grid"><div class="field"><label for="plan-client-name">Nome</label><input id="plan-client-name" type="text" autocomplete="name" required></div><div class="field"><label for="plan-client-phone">WhatsApp</label><input id="plan-client-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(92) 99999-9999" required></div></div><button class="button" type="submit">Enviar solicitação <span aria-hidden="true">→</span></button></form></section>
   <section class="booking-success" id="plan-interest-success" hidden><span class="eyebrow">Solicitação enviada</span><h2>Obrigado, <span id="plan-success-name"></span>.</h2><p id="plan-success-note">Registramos seu interesse no plano <strong id="plan-success-title"></strong>.</p><div class="record-actions"><a class="button button-small" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="planos.html">Voltar aos planos</a></div></section>
 </div></section>
@@ -186,18 +186,20 @@
           <span class="brand-mark" aria-hidden="true"><span>C</span></span>
           <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
         </a>
-        <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica e feito para a vida de hoje.</p>
+        <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica italiana e feito para a vida de hoje.</p>
       </div>
       <div>
-        <p class="footer-heading">Unidade</p>
+        <p class="footer-heading">Unidade Planalto</p>
         <div class="footer-links">
-          <span>Planalto · Manaus, AM</span>
-          <span>Segunda a sábado</span>
-          <span>09h às 19h</span>
+          <span>Av. Desembargador João Machado, 15B</span>
+          <span>Planalto · Manaus, AM — CEP 69044-000</span>
+          <span>Segunda a sábado · 09h às 20h</span>
+          <a href="https://wa.me/559285803578" target="_blank" rel="noopener">WhatsApp: (92) 8580-3578</a>
+          <a href="https://instagram.com/castellaribarbearia" target="_blank" rel="noopener">Instagram: @castellaribarbearia</a>
         </div>
       </div>
     </div>
-    <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span> · Conteúdo demonstrativo</span></div>
+    <div class="footer-bottom"><span>Barbearia Castellari · Classic Italian</span><span>© <span id="current-year"></span></span></div>
   </div>
 </footer>
 <script>window.setTimeout(function(){document.querySelectorAll('[aria-busy="true"]').forEach(function(list){if(!list.children.length){list.setAttribute('aria-busy','false');var message=document.createElement('p');message.className='empty-state';message.textContent='Não foi possível carregar este conteúdo.';list.replaceChildren(message);}});},8000);</script>

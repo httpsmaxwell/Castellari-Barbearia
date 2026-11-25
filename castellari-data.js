@@ -1,48 +1,48 @@
-const CATALOG_VERSION = 3;
+const CATALOG_VERSION = 5;
 
 const SERVICES = [
-  // Cortes
-  { id: 'corte-novo', category: 'Cortes', name: 'Corte Premium (Clientes Novos)', price: 45, duration: 45, includesCut: true, featured: true, badge: 'Em alta', desc: 'Corte personalizado + lavagem e finalização para novos clientes.' },
-  { id: 'corte-premium', category: 'Cortes', name: 'Corte Premium', price: 50, duration: 45, includesCut: true, featured: true, desc: 'Corte clássico ou moderno com acabamento na navalha e lavagem.' },
-  { id: 'corte-infantil', category: 'Cortes', name: 'Corte Infantil', price: 60, duration: 40, includesCut: true, desc: 'Atendimento cuidadoso e estilizado para crianças.' },
-  { id: 'corte-feminino', category: 'Cortes', name: 'Corte Feminino', price: 70, duration: 60, includesCut: true, desc: 'Corte técnico e finalização personalizada.' },
-  { id: 'pezinho', category: 'Cortes', name: 'Pezinho', price: 25, duration: 15, includesCut: false, desc: 'Acabamento preciso nos contornos e nuca.' },
+  // Cabelo
+  { id: 'corte-tradicional', category: 'Cortes', name: 'Corte', price: 50, clubPrice: 45, duration: 40, includesCut: true, featured: true, badge: 'Em alta', desc: 'Corte personalizado clássico ou moderno com finalização alinhada.' },
+  { id: 'corte-novo', category: 'Cortes', name: 'Corte Premium (Clientes Novos)', price: 45, clubPrice: 45, duration: 45, includesCut: true, featured: true, badge: 'Promoção', desc: 'Corte personalizado + lavagem e finalização especial para clientes novos.' },
+  { id: 'corte-infantil', category: 'Cortes', name: 'Corte Infantil', price: 60, clubPrice: 54, duration: 40, includesCut: true, desc: 'Atendimento cuidadoso e estilizado para crianças.' },
+  { id: 'corte-feminino', category: 'Cortes', name: 'Corte Feminino', price: 70, clubPrice: 63, duration: 60, includesCut: true, desc: 'Corte técnico e finalização personalizada.' },
+  { id: 'terapia-capilar', category: 'Cortes', name: 'Terapia Capilar', price: 70, clubPrice: 63, duration: 40, includesCut: false, desc: 'Tratamento intensivo de revitalização do couro cabeludo e fios.' },
+  { id: 'alinhamento-capilar', category: 'Cortes', name: 'Alinhamento Capilar', price: 160, clubPrice: 144, duration: 60, includesCut: false, desc: 'Redução de volume e controle de frizz com alinhamento dos fios.' },
+  { id: 'pintura-capilar', category: 'Cortes', name: 'Pintura', price: 130, clubPrice: 117, duration: 50, includesCut: false, desc: 'Cobertura homogênea ou revitalização da cor capilar.' },
+  { id: 'luzes', category: 'Cortes', name: 'Luzes', price: 150, clubPrice: 135, duration: 90, includesCut: false, desc: 'Mechas e iluminação com técnica profissional.' },
+  { id: 'platinado-descoloracao', category: 'Cortes', name: 'Platinado / Descoloração', price: 170, clubPrice: 153, duration: 120, includesCut: false, desc: 'Descoloração global com proteção e matização dos fios.' },
 
-  // Combos
-  { id: 'combo-exp', category: 'Combos', name: 'COMBO Experiência Completa', price: 250, duration: 90, includesCut: true, featured: true, badge: 'Em alta', desc: 'Corte Premium + Barboterapia completa + Hidratação e cuidados faciais.' },
-  { id: 'combo-premium', category: 'Combos', name: 'COMBO Premium', price: 210, duration: 75, includesCut: true, featured: true, desc: 'Corte Premium + Barboterapia com toalha quente e finalização.' },
-  { id: 'combo-total', category: 'Combos', name: 'Combo Cuidado Total', price: 210, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha e cuidados faciais essenciais.' },
-  { id: 'combo-essencial', category: 'Combos', name: 'Combo Essencial', price: 160, duration: 60, includesCut: true, featured: true, desc: 'Corte + Barba Completa alinhada na navalha.' },
-  { id: 'combo-corte-hidra-barba', category: 'Combos', name: 'COMBO Corte + Hidratação + Barboterapia', price: 160, duration: 75, includesCut: true, desc: 'Corte Premium combinado com hidratação capilar e barboterapia.' },
-  { id: 'combo-pele', category: 'Combos', name: 'Combo Pele em Dia', price: 160, duration: 60, includesCut: true, desc: 'Corte + cuidados faciais para limpeza e renovação da pele.' },
-  { id: 'combo-facial-cera', category: 'Combos', name: 'COMBO Terapia Facial + Depilação na Cera (Nariz e Ouvido)', price: 150, duration: 60, includesCut: false, desc: 'Cuidado estético facial completo com extração e depilação.' },
-  { id: 'combo-visual', category: 'Combos', name: 'Combo Visual Completo', price: 130, duration: 75, includesCut: true, desc: 'Corte + Barba + Sobrancelha + Limpeza facial.' },
-  { id: 'combo-rapido', category: 'Combos', name: 'Combo Rápido e Eficiente', price: 100, duration: 50, includesCut: true, desc: 'Agilidade sem abrir mão do padrão Castellari.' },
+  // Combos Oficiais
+  { id: 'combo-1-experiencia-completa', category: 'Combos', name: 'Combo Experiência Completa', price: 250, originalPrice: 300, clubPrice: 225, duration: 90, includesCut: true, featured: true, badge: 'Mais pedido', desc: 'Corte + Barba + Terapia Capilar + Sobrancelha + Limpeza de Pele + Depilação na Cera.' },
+  { id: 'combo-2-premium', category: 'Combos', name: 'Combo Premium', price: 210, originalPrice: 250, clubPrice: 189, duration: 75, includesCut: true, featured: true, desc: 'Corte + Barba + Hidratação + Sobrancelha + Limpeza de Pele.' },
+  { id: 'combo-3-cuidado-total', category: 'Combos', name: 'Combo Cuidado Total', price: 210, originalPrice: 240, clubPrice: 189, duration: 75, includesCut: true, desc: 'Corte + Terapia Capilar + Terapia Facial.' },
+  { id: 'combo-4-essencial', category: 'Combos', name: 'Combo Essencial', price: 160, originalPrice: 180, clubPrice: 144, duration: 60, includesCut: true, featured: true, desc: 'Corte + Barboterapia + Hidratação.' },
+  { id: 'combo-5-pele-em-dia', category: 'Combos', name: 'Combo Pele em Dia', price: 160, originalPrice: 180, clubPrice: 144, duration: 60, includesCut: true, desc: 'Corte + Barboterapia + Limpeza de Pele.' },
+  { id: 'combo-6-visual-completo', category: 'Combos', name: 'Combo Visual Completo', price: 130, originalPrice: 150, clubPrice: 117, duration: 60, includesCut: true, desc: 'Corte + Barba + Sobrancelha.' },
+  { id: 'combo-7-rapido-eficiente', category: 'Combos', name: 'Combo Rápido e Eficiente', price: 100, originalPrice: 120, clubPrice: 90, duration: 45, includesCut: true, desc: 'Corte + Hidratação + Sobrancelha.' },
+  { id: 'combo-corte-hidra-barboterapia', category: 'Combos', name: 'Combo Corte + Hidratação + Barboterapia', price: 160, clubPrice: 144, duration: 75, includesCut: true, desc: 'Corte alinhado, hidratação profunda e barboterapia relaxante.' },
+  { id: 'combo-terapia-facial-cera', category: 'Combos', name: 'Combo Terapia Facial + Depilação na Cera', price: 150, clubPrice: 135, duration: 60, includesCut: false, desc: 'Tratamento facial completo com depilação na cera (nariz ou ouvido).' },
+  { id: 'combo-corte-barboterapia', category: 'Combos', name: 'Combo Corte + Barboterapia', price: 120, clubPrice: 108, duration: 60, includesCut: true, desc: 'Alinhamento completo do corte com a experiência de barboterapia.' },
 
-  // Barba & Terapias
-  { id: 'barboterapia', category: 'Barba & Terapias', name: 'Barboterapia', price: 80, duration: 45, includesCut: false, featured: true, desc: 'Toalha quente, massagem facial, óleos essenciais e navalha.' },
-  { id: 'barba-completa', category: 'Barba & Terapias', name: 'Barba Completa', price: 50, duration: 35, includesCut: false, featured: true, desc: 'Modelagem, alinhamento e hidratação pós-barba.' },
-  { id: 'terapia-capilar', category: 'Barba & Terapias', name: 'Terapia Capilar (Bálsamo + Shampoo Deep Ice)', price: 70, duration: 40, includesCut: false, desc: 'Refrescância profunda e revitalização do couro cabeludo.' },
-  { id: 'terapia-facial', category: 'Barba & Terapias', name: 'Terapia Facial com Extração de Cravos', price: 120, duration: 50, includesCut: false, desc: 'Limpeza profunda de poros e revitalização da pele.' },
-  { id: 'hidratacao-capilar', category: 'Barba & Terapias', name: 'Hidratação Capilar', price: 50, duration: 30, includesCut: false, desc: 'Nutrição e maciez imediata para cabelos ressecados.' },
-  { id: 'esfoliacao-facial', category: 'Barba & Terapias', name: 'Esfoliação Facial Anti Oleosidade', price: 50, duration: 30, includesCut: false, desc: 'Controle de oleosidade e renovação celular.' },
-  { id: 'pigmentacao-barba', category: 'Barba & Terapias', name: 'Pigmentação de Barba', price: 50, duration: 30, includesCut: false, desc: 'Preenchimento visual e definição de contorno.' },
-  { id: 'micropigmentacao', category: 'Barba & Terapias', name: 'Preenchimento de Barba (Micro Pigmentação)', price: 450, duration: 90, includesCut: false, pricePrefix: 'A partir de ', desc: 'Técnica de longa duração para falhas na barba.' },
+  // Barba
+  { id: 'barba-tradicional', category: 'Barba & Terapias', name: 'Barba', price: 50, clubPrice: 45, duration: 35, includesCut: false, featured: true, desc: 'Modelagem, toalha morna e finalização com balm hidratante.' },
+  { id: 'barboterapia', category: 'Barba & Terapias', name: 'Barboterapia', price: 80, clubPrice: 72, duration: 45, includesCut: false, featured: true, badge: 'Destaque', desc: 'Ritual clássico com toalha quente, ozonioterapia, massagem e navalha.' },
+  { id: 'pigmentacao-barba', category: 'Barba & Terapias', name: 'Pigmentação de Barba', price: 50, clubPrice: 45, duration: 30, includesCut: false, desc: 'Preenchimento e definição harmônica dos contornos da barba.' },
 
-  // Estética & Química
-  { id: 'sobrancelha', category: 'Estética & Química', name: 'Sobrancelha (limpeza)', price: 20, duration: 20, includesCut: false, featured: true, desc: 'Limpeza e alinhamento natural na pinça ou navalha.' },
-  { id: 'cera-nariz', category: 'Estética & Química', name: 'Depilação na Cera (Nariz)', price: 30, duration: 15, includesCut: false, desc: 'Remoção rápida, higiênica e confortável.' },
-  { id: 'cera-ouvido', category: 'Estética & Química', name: 'Depilação na Cera (Ouvido)', price: 30, duration: 15, includesCut: false, desc: 'Acabamento limpo e seguro.' },
-  { id: 'desenho', category: 'Estética & Química', name: 'Desenho', price: 25, duration: 20, includesCut: false, pricePrefix: 'A partir de ', desc: 'Riscos e arte personalizada no corte.' },
-  { id: 'pintura-capilar', category: 'Estética & Química', name: 'Pintura Capilar', price: 150, duration: 60, includesCut: false, pricePrefix: 'A partir de ', desc: 'Tonalização ou cobertura natural dos fios.' },
-  { id: 'alinhamento-capilar', category: 'Estética & Química', name: 'Alinhamento Capilar', price: 160, duration: 60, includesCut: false, desc: 'Redução de volume e controle de frizz.' },
-  { id: 'platinado', category: 'Estética & Química', name: 'Platinado/Descoloração', price: 180, duration: 120, includesCut: false, desc: 'Descoloração global com proteção dos fios.' },
+  // Pele & Estética
+  { id: 'terapia-facial-cravos', category: 'Pele & Estética', name: 'Terapia Facial + Extração de Cravos', price: 120, clubPrice: 108, duration: 50, includesCut: false, desc: 'Limpeza profunda com esfoliação, vapor e extração de impurezas.' },
+  { id: 'esfoliacao-mascara-black', category: 'Pele & Estética', name: 'Esfoliação e Máscara Black', price: 50, clubPrice: 45, duration: 30, includesCut: false, desc: 'Remoção de células mortas, renovação e controle de oleosidade.' },
+  { id: 'combo-depilacao-cera', category: 'Pele & Estética', name: 'Combo Depilação na Cera (Nariz e Ouvido)', price: 50, clubPrice: 45, duration: 25, includesCut: false, desc: 'Depilação higiênica e rápida nas duas regiões.' },
+  { id: 'depilacao-cera-avulsa', category: 'Pele & Estética', name: 'Depilação na Cera (Nariz ou Ouvido)', price: 30, clubPrice: 27, duration: 15, includesCut: false, desc: 'Remoção rápida, segura e confortável.' },
+  { id: 'sobrancelha-limpeza', category: 'Pele & Estética', name: 'Limpeza de Sobrancelha', price: 20, clubPrice: 18, duration: 15, includesCut: false, desc: 'Alinhamento preciso e natural na pinça ou lâmina.' },
 
-  // Clube VIP
-  { id: 'vip-corte', category: 'Clube VIP', name: 'VIP - CORTE', price: 70, duration: 45, includesCut: true, desc: 'Serviço exclusivo para assinantes ou atendimento VIP.' },
-  { id: 'vip-barboterapia', category: 'Clube VIP', name: 'VIP - BARBOTERAPIA', price: 80, duration: 45, includesCut: false, desc: 'Barboterapia completa no padrão VIP Castellari.' },
-  { id: 'vip-hidratacao', category: 'Clube VIP', name: 'VIP - HIDRATAÇÃO', price: 50, duration: 30, includesCut: false, desc: 'Hidratação capilar no lavatório.' },
-  { id: 'vip-sobrancelha', category: 'Clube VIP', name: 'VIP - SOBRANCELHA', price: 20, duration: 15, includesCut: false, desc: 'Limpeza e alinhamento de sobrancelha.' },
+  // Demais & Serviços Especiais
+  { id: 'consultoria-visagismo', category: 'Serviços Especiais', name: 'Consultoria de Imagem (Visagismo)', price: 200, clubPrice: 180, duration: 60, includesCut: true, badge: 'Novo', featured: true, desc: 'Análise morfológica de rosto e estilo para definir corte e barba ideais.' },
+  { id: 'dia-noivo-vip', category: 'Serviços Especiais', name: 'Dia do Noivo VIP', price: 500, clubPrice: 450, duration: 150, includesCut: true, badge: 'Exclusivo', desc: 'Atendimento reservado com corte, barboterapia, terapias faciais e relaxamento.' },
+  { id: 'padrinho-vip', category: 'Serviços Especiais', name: 'Padrinho VIP', price: 300, clubPrice: 270, duration: 90, includesCut: true, desc: 'Cuidado estético completo para celebrar em grande estilo.' },
+  { id: 'nanopigmentacao-barba', category: 'Serviços Especiais', name: 'Nanopigmentação de Barba', price: 600, clubPrice: 540, duration: 90, includesCut: false, desc: 'Preenchimento duradouro com micropigmentação fio a fio.' },
+  { id: 'protese-capilar-aplicacao', category: 'Serviços Especiais', name: 'Aplicação de Prótese Capilar', price: 2500, clubPrice: 2250, duration: 180, includesCut: true, desc: 'Fixação, corte, personalização e acabamento natural de prótese.' },
+  { id: 'protese-capilar-manutencao', category: 'Serviços Especiais', name: 'Manutenção de Prótese Capilar', price: 150, clubPrice: 135, duration: 60, includesCut: false, desc: 'Higienização, troca de adesivos e alinhamento da peça.' }
 ];
 
 const PLANS = [
@@ -54,27 +54,50 @@ const PLANS = [
     badgeType: 'gold',
     slots: 7,
     days: 'Segunda a Sábado',
-    benefits: ['Cortes ilimitados de Seg a Sáb', 'Barboterapia completa ilimitada', 'Prioridade na agenda Planalto', 'Vigência indeterminada sem fidelidade'],
+    gift: 'Boné Exclusivo da Barbearia',
+    discount: '15% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Cortes de cabelo à vontade (Seg a Sáb)',
+      'Barboterapia completa à vontade',
+      'Hidratação capilar inclusa',
+      'Limpeza de sobrancelha inclusa',
+      '15% OFF em produtos e serviços extras',
+      'Boné Exclusivo Castellari de brinde na adesão',
+    ],
   },
   {
     id: 'vip-corte',
     name: 'VIP - Corte',
     price: 150,
-    badge: 'Mais vendido',
+    badge: 'Destaque VIP',
     badgeType: 'gold',
     slots: 3,
     days: 'Segunda a Sábado',
-    benefits: ['Cortes ilimitados de Seg a Sáb', 'Acabamento e lavagem inclusos', 'Agendamento flexível', 'Vigência indeterminada'],
+    gift: 'Boné Exclusivo da Barbearia',
+    discount: '15% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Cortes de cabelo à vontade (Seg a Sáb)',
+      'Hidratação capilar inclusa',
+      'Limpeza de sobrancelha inclusa',
+      '15% OFF em produtos e serviços extras',
+      'Boné Exclusivo Castellari de brinde na adesão',
+    ],
   },
   {
     id: 'essencial-corte-barba',
     name: 'ESSENCIAL - Corte + Barba',
     price: 180,
-    badge: 'Esgotado',
-    badgeType: 'soldout',
-    slots: 0,
+    badge: 'Alta procura',
+    badgeType: 'gold',
+    slots: 5,
     days: 'Segunda a Sábado',
-    benefits: ['Cortes e barba de Seg a Sáb', 'Alinhamento clássico na navalha', 'Vagas temporariamente preenchidas', 'Entre na lista de espera'],
+    discount: '10% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Cortes de cabelo de Segunda a Sábado',
+      'Barba alinhada de Segunda a Sábado',
+      '10% OFF em serviços extras e produtos',
+      'Atendimento flexível com a equipe',
+    ],
   },
   {
     id: 'essencial-corte',
@@ -83,25 +106,45 @@ const PLANS = [
     badge: null,
     slots: 10,
     days: 'Segunda a Sábado',
-    benefits: ['Cortes mensais de Seg a Sáb', 'Atendimento com toda a equipe', 'Excelente custo-benefício', '10 vagas disponíveis'],
+    discount: '10% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Cortes de cabelo de Segunda a Sábado',
+      '10% OFF em serviços extras e produtos',
+      'Excelente custo-benefício mensal',
+      'Atendimento no padrão Castellari',
+    ],
   },
   {
     id: 'promocional-corte-barba',
     name: 'PROMOCIONAL - Corte + Barba',
     price: 150,
-    badge: null,
+    badge: 'Economia',
+    badgeType: 'promo',
     slots: 6,
     days: 'Segunda a Quinta',
-    benefits: ['Corte + Barba de Seg a Qui', 'Ideal para agenda no início da semana', 'Economia garantida no mês', '6 vagas disponíveis'],
+    discount: '10% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Corte + Barba de Segunda a Quinta',
+      'Ideal para quem cuida do visual na semana',
+      '10% OFF em serviços extras e produtos',
+      'Sem fidelidade ou carência',
+    ],
   },
   {
     id: 'promocional-corte',
     name: 'PROMOCIONAL - Corte',
     price: 70,
-    badge: null,
+    badge: 'Mais acessível',
+    badgeType: 'promo',
     slots: 3,
     days: 'Segunda a Quinta',
-    benefits: ['Cortes de Segunda a Quinta', 'O plano mais acessível do Clube', 'Sem taxa de adesão', '3 vagas disponíveis'],
+    discount: '10% OFF em Serviços Extras e Produtos',
+    benefits: [
+      'Cortes de Segunda a Quinta',
+      'O plano mais econômico do Clube Castellari',
+      '10% OFF em serviços extras e produtos',
+      'Sem taxa de adesão',
+    ],
   },
 ];
 
@@ -115,4 +158,25 @@ const BARBERS = [
   { id: 'sem-preferencia', name: 'Sem preferência', initials: '★', featured: false, role: 'Primeiro disponível', photo: null },
 ];
 
-window.CastellariData = { SERVICES, PLANS, BARBERS, CATALOG_VERSION };
+const SHOP_INFO = {
+  name: 'Barbearia Castellari',
+  tagline: 'Classic Italian',
+  phone: '+55 92 8580-3578',
+  phoneRaw: '559285803578',
+  phoneDisplay: '(92) 8580-3578',
+  email: 'barbeariacastellari@gmail.com',
+  address: 'Avenida Desembargador João Machado, 15B',
+  neighborhood: 'Planalto',
+  city: 'Manaus',
+  state: 'AM',
+  zip: '69044-000',
+  fullAddress: 'Avenida Desembargador João Machado, 15B - Planalto, Manaus - AM, 69044-000',
+  hours: 'Segunda a Sábado, das 09:00 às 20:00',
+  hoursShort: 'Seg. a sáb. · 09h às 20h',
+  instagram: 'castellaribarbearia',
+  instagramUrl: 'https://instagram.com/castellaribarbearia',
+  facebook: 'castellaribarbearia',
+  whatsappUrl: 'https://wa.me/559285803578',
+};
+
+window.CastellariData = { SERVICES, PLANS, BARBERS, SHOP_INFO, CATALOG_VERSION };

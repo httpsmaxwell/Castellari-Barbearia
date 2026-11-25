@@ -4,7 +4,7 @@
   let PLANS = data.PLANS || [];
   let BARBERS = data.BARBERS || [];
   let CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
-  const TIME_SLOTS = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+  const TIME_SLOTS = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
   const BOOKING_STORAGE_KEY = "castellari-booking";
   const THEME_STORAGE_KEY = "castellari-theme";
 
@@ -141,13 +141,19 @@
   }
 
   function serviceCard(service, index) {
+    const hasClubPrice = service.clubPrice && service.clubPrice < service.price;
+    const hasOriginalPrice = service.originalPrice && service.originalPrice > service.price;
     return (
       '<a class="service-card" href="agendar.html?service=' + encodeURIComponent(service.id) + '" aria-label="Escolher ' + escapeHTML(service.name) + '">' +
       '<div class="service-topline"><span class="service-number">' + String(index + 1).padStart(2, "0") + "</span>" +
       (service.badge ? '<span class="service-badge">' + escapeHTML(service.badge) + "</span>" : "") +
       "</div>" +
       "<h3>" + escapeHTML(service.name) + "</h3><p>" + escapeHTML(service.desc) + "</p>" +
-      '<div class="service-bottom"><div class="price"><small>' + service.duration + " min</small>" + escapeHTML(servicePrice(service)) + "</div>" +
+      '<div class="service-bottom"><div class="price"><small>' + service.duration + " min</small>" +
+      (hasOriginalPrice ? '<span style="text-decoration:line-through;color:var(--muted);font-size:16px;margin-right:6px;">' + money(service.originalPrice) + "</span>" : "") +
+      escapeHTML(servicePrice(service)) +
+      (hasClubPrice ? '<span style="display:block;font-size:11px;color:var(--gold,#b38e46);font-family:var(--sans);font-weight:700;margin-top:4px;">No Clube: ' + money(service.clubPrice) + "</span>" : "") +
+      "</div>" +
       '<span class="text-link service-choose">Escolher <span aria-hidden="true">→</span></span></div></a>'
     );
   }
@@ -1012,6 +1018,15 @@
       $("#success-date").textContent = selectedDay.full + " às " + selectedTime;
       $("#success-professional").textContent = barber ? barber.name : "Sem preferência";
       $("#success-total").textContent = money(totalPrice);
+
+      const whatsBtn = $("#success-whatsapp-btn");
+      if (whatsBtn) {
+        const clientFirstName = $("#client-name").value.trim();
+        const barberText = barber ? barber.name : "Primeiro disponível";
+        const servText = chosen.map((s) => s.name).join(", ");
+        const whatsMsg = `Olá, Barbearia Castellari! Fiz um agendamento pelo site:\n\n👤 *Cliente:* ${clientFirstName}\n✂️ *Serviço(s):* ${servText}\n💈 *Profissional:* ${barberText}\n📅 *Data:* ${selectedDay.full} às ${selectedTime}\n💰 *Valor estimado:* ${money(totalPrice)}\n\nAguardo confirmação!`;
+        whatsBtn.href = "https://wa.me/559285803578?text=" + encodeURIComponent(whatsMsg);
+      }
 
       try {
         localStorage.removeItem(BOOKING_STORAGE_KEY);
