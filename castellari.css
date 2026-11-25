@@ -428,21 +428,16 @@ svg {
 
 /* Faixa lateral removida para layout limpo e minimalista */
 
-/* ---- HERO COM FOTO REAL ---- */
-
 .hero-grid {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 460px;
-  align-items: center;
-  gap: 48px;
-  max-width: var(--content);
-  min-height: 520px;
+  display: block;
+  max-width: 760px;
+  min-height: auto;
   padding-block: 60px 48px;
 }
 
 .hero-copy {
-  max-width: 560px;
+  max-width: 720px;
 }
 
 .home-hero .eyebrow {
@@ -477,21 +472,7 @@ svg {
 }
 
 .hero-visual {
-  position: relative;
-  display: block;
-  height: 460px;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.hero-neon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 20%;
-  display: block;
-  border-radius: 2px;
-  box-shadow: 0 0 60px rgba(217,189,130,.18), 0 24px 48px rgba(0,0,0,.45);
+  display: none !important;
 }
 
 .hero-visual::before,
@@ -565,105 +546,6 @@ svg {
   border-bottom: 1px solid var(--line);
   background: linear-gradient(118deg, var(--surface), var(--paper));
 }
-
-/* ---- SEÇÃO AMBIENTE / ESPAÇO ---- */
-
-.home-ambiente-section {
-  padding: 56px 0 72px;
-  background: var(--green);
-}
-
-[data-theme="light"] .home-ambiente-section {
-  background: #142c23;
-}
-
-.home-ambiente-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 36px;
-  color: #f0ecdf;
-}
-
-.home-ambiente-heading h2 {
-  margin: 8px 0 6px;
-  color: #f8f4eb;
-  font-size: clamp(24px, 3vw, 36px);
-}
-
-.home-ambiente-heading p {
-  color: #c3cec3;
-  font-size: 15px;
-  max-width: 46ch;
-}
-
-.home-ambiente-heading .text-link {
-  white-space: nowrap;
-  color: #d9bd82;
-  flex-shrink: 0;
-}
-
-.home-ambiente-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 16px;
-  height: 440px;
-}
-
-.home-ambiente-main {
-  height: 100%;
-  overflow: hidden;
-  border-radius: 2px;
-}
-
-.home-ambiente-side {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 16px;
-  height: 100%;
-}
-
-.home-ambiente-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 2px;
-  transition: transform .6s ease;
-}
-
-.home-ambiente-main:hover .home-ambiente-img,
-.home-ambiente-side .home-ambiente-img:hover {
-  transform: scale(1.03);
-}
-
-.home-ambiente-cta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 20px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(217,189,130,.22);
-  border-radius: 2px;
-}
-
-.home-ambiente-logo {
-  width: 54px;
-  height: 54px;
-  object-fit: contain;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.home-ambiente-cta p {
-  color: #d9bd82;
-  font: 700 13px/1.5 var(--sans);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  margin: 0;
-}
-
 
 .page-hero .lead {
   margin-bottom: 0;
@@ -1950,27 +1832,9 @@ a.service-card:focus-visible {
     padding-inline: 14px;
   }
 
-  /* Foto do neon oculta no mobile — hero é single-column */
+  /* Cartão decorativo vazio ocultado no mobile para não poluir nem empurrar o conteúdo */
   .hero-visual {
     display: none !important;
-  }
-
-  .home-ambiente-grid {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-
-  .home-ambiente-main {
-    height: 240px;
-  }
-
-  .home-ambiente-side {
-    grid-template-rows: 200px auto;
-  }
-
-  .home-ambiente-heading {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .page-hero {
