@@ -7,11 +7,11 @@
   <meta name="description" content="Cortes, barba e rituais de cuidado na unidade Planalto, em Manaus.">
   <title>Barbearia Castellari — Classic Italian</title>
   <link rel="canonical" href="https://castellari-barbearia.netlify.app/">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" href="img/logo-castellari.png"><link rel="apple-touch-icon" href="img/logo-castellari.png">
   <meta property="og:title" content="Barbearia Castellari — Classic Italian">
   <meta property="og:description" content="Cortes, barba e rituais de cuidado na unidade Planalto, em Manaus.">
   <meta property="og:url" content="https://castellari-barbearia.netlify.app/">
-  <meta property="og:image" content="https://castellari-barbearia.netlify.app/castellari-og.svg">
+  <meta property="og:image" content="https://castellari-barbearia.netlify.app/img/logo-castellari.png">
   <meta property="og:type" content="website">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"BarberShop","name":"Barbearia Castellari","telephone":"+559285803578","address":{"@type":"PostalAddress","streetAddress":"Avenida Desembargador João Machado, 15B","addressLocality":"Manaus","addressRegion":"AM","postalCode":"69044-000","addressCountry":"BR"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"09:00","closes":"20:00"}]}
@@ -20,10 +20,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=6">
-  <script src="castellari-data.js?v=6" defer></script>
-  <script type="module" src="castellari-firebase.js?v=6"></script>
-  <script src="castellari.js?v=6" defer></script>
+  <link rel="stylesheet" href="castellari.css?v=7">
+  <script src="castellari-data.js?v=7" defer></script>
+  <script type="module" src="castellari-firebase.js?v=7"></script>
+  <script src="castellari.js?v=7" defer></script>
 </head>
 <body data-page="home">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -65,8 +65,8 @@
       <div class="hero-actions"><a class="button hero-booking-button" href="agendar.html">Agendar horário <span aria-hidden="true">→</span></a><a class="button button-light" href="servicos.html">Ver serviços</a></div>
       <div class="hero-meta"><div><strong>ONDE</strong>Av. Des. João Machado, 15B · Planalto</div><div><strong>HORÁRIO</strong>Seg. a sáb. · 09h às 20h</div></div>
     </div>
-    <div class="hero-visual" role="img" aria-label="Monograma Castellari em uma composição inspirada na barbearia clássica">
-      <span class="hero-letter" aria-hidden="true">C</span><span class="hero-stamp">Tradizione<br>e cura</span>
+    <div class="hero-visual" role="img" aria-label="Painel de neon da Barbearia Castellari">
+      <img src="img/ambiente/neon-sign.jpg" alt="Placa de neon da Barbearia Castellari" class="hero-neon-img" loading="eager">
     </div>
   </div>
 </section>
@@ -81,6 +81,26 @@
   <div class="container home-preview-grid">
     <section class="home-preview-card"><div class="home-preview-heading"><h2>Clube Castellari</h2><a class="text-link" href="planos.html">Conhecer os planos <span aria-hidden="true">→</span></a></div><div class="home-plan-preview" id="home-plan-preview" aria-busy="true"><span class="skeleton-line"></span><span class="skeleton-line"></span></div><noscript><style>.skeleton-card,.skeleton-line{display:none!important}</style><p class="catalog-note">Ative o JavaScript para ver os planos.</p></noscript></section>
     <section class="home-preview-card"><div class="home-preview-heading"><h2>Nossa equipe</h2><a class="text-link" href="equipe.html">Ver equipe completa <span aria-hidden="true">→</span></a></div><div class="home-team-preview" id="home-team-preview" aria-busy="true"><span class="skeleton-line"></span><span class="skeleton-line"></span></div><noscript><style>.skeleton-card,.skeleton-line{display:none!important}</style><p class="catalog-note">Ative o JavaScript para ver a equipe.</p></noscript></section>
+  </div>
+</section>
+<section class="home-ambiente-section">
+  <div class="container">
+    <div class="home-ambiente-heading">
+      <div><span class="eyebrow">O Espaço</span><h2>Mais do que uma barbearia.</h2><p>Um ambiente projetado para você relaxar, conversar e sair renovado.</p></div>
+      <a class="text-link" href="agendar.html">Agendar agora <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="home-ambiente-grid">
+      <div class="home-ambiente-main">
+        <img src="img/ambiente/barbeiros-acao.jpg" alt="Barbeiros atendendo clientes no espaço Castellari" loading="lazy" class="home-ambiente-img">
+      </div>
+      <div class="home-ambiente-side">
+        <img src="img/ambiente/interior-lounge.jpg" alt="Lounge da Barbearia Castellari com guitarra e poltrona em couro" loading="lazy" class="home-ambiente-img">
+        <div class="home-ambiente-cta">
+          <img src="img/logo-castellari.png" alt="Logo Castellari Barbearia" class="home-ambiente-logo" loading="lazy">
+          <p>Tradizione<br>e cura</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 </main>
