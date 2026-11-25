@@ -161,8 +161,12 @@
   function renderFeaturedServices() {
     const grid = $("#featured-services");
     if (!grid) return;
-    const ids = ["corte-premium", "barboterapia", "combo-premium"];
-    const items = ids.map((id) => SERVICES.find((service) => service.id === id)).filter(Boolean);
+    const ids = ["corte-tradicional", "barboterapia", "combo-2-premium"];
+    let items = ids.map((id) => SERVICES.find((service) => service.id === id)).filter(Boolean);
+    if (items.length < 3) {
+      const extra = SERVICES.filter((s) => s.featured && !items.some((it) => it.id === s.id));
+      items = items.concat(extra).slice(0, 3);
+    }
     grid.innerHTML = items.length
       ? items.map((service, index) => serviceCard(service, index)).join("")
       : '<p class="empty-state">Nenhum serviço em destaque disponível.</p>';
