@@ -6,7 +6,7 @@
   let CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
   let SHOP_SETTINGS = { openingTime: "09:00", closingTime: "20:00", openDays: [1, 2, 3, 4, 5, 6], slotIntervalMinutes: 60 };
   const BOOKING_STORAGE_KEY = "castellari-booking";
-  const THEME_STORAGE_KEY = "castellari-theme";
+  const THEME_STORAGE_KEY = "castellari-theme-preference";
 
   let currentUser = null;
   let currentProfile = null;
@@ -87,9 +87,9 @@
   }
 
   function initTheme() {
-    let saved = "light";
+    let saved = "dark";
     try {
-      saved = localStorage.getItem(THEME_STORAGE_KEY) || "light";
+      saved = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
     } catch (_) {}
     setTheme(saved);
     $$("[data-theme-toggle]").forEach((button) => {

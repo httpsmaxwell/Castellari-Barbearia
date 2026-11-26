@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f0e7">
+  <meta name="theme-color" content="#111b16">
   <meta name="description" content="Conheça os planos mensais do Clube Castellari.">
   <title>Clube Castellari — Barbearia Castellari</title>
   <link rel="canonical" href="https://castellari-barbearia.netlify.app/planos.html">
@@ -16,11 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=6">
+  <script>try{if(localStorage.getItem('castellari-theme-preference')==='light'){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#f4f0e7';}}catch(e){}</script>
+  <link rel="stylesheet" href="castellari.css?v=7">
   <script src="castellari-data.js?v=7" defer></script>
   <script type="module" src="castellari-firebase.js?v=8"></script>
-  <script src="castellari.js?v=7" defer></script>
+  <script src="castellari.js?v=8" defer></script>
 </head>
 <body data-page="plans">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -39,7 +39,7 @@
     </nav>
     <div class="header-actions">
       <a class="button button-small" data-nav="booking" href="agendar.html">Agendar horário <span aria-hidden="true">→</span></a>
-      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar tema escuro" aria-pressed="false">☾</button>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar tema claro" aria-pressed="true">☼</button>
       <button class="menu-toggle" type="button" data-menu-toggle aria-controls="mobile-panel" aria-expanded="false" aria-label="Abrir menu">☰</button>
     </div>
   </div>
