@@ -158,21 +158,6 @@
     );
   }
 
-  function renderFeaturedServices() {
-    const grid = $("#featured-services");
-    if (!grid) return;
-    const ids = ["corte-tradicional", "barboterapia", "combo-2-premium"];
-    let items = ids.map((id) => SERVICES.find((service) => service.id === id)).filter(Boolean);
-    if (items.length < 3) {
-      const extra = SERVICES.filter((s) => s.featured && !items.some((it) => it.id === s.id));
-      items = items.concat(extra).slice(0, 3);
-    }
-    grid.innerHTML = items.length
-      ? items.map((service, index) => serviceCard(service, index)).join("")
-      : '<p class="empty-state">Nenhum serviço em destaque disponível.</p>';
-    grid.setAttribute("aria-busy", "false");
-  }
-
   function renderCatalog() {
     const grid = $("#services-grid");
     const categories = $("#category-list");
@@ -267,33 +252,23 @@
     grid.setAttribute("aria-busy", "false");
   }
 
-  function renderHomePreviews() {
-    const plans = $("#home-plan-preview");
-    if (plans) {
-      plans.innerHTML =
-        PLANS.slice(0, 2).map((plan) =>
-          '<a class="home-plan-item" href="planos.html"><span>' + escapeHTML(plan.name) + "</span><strong>" + money(plan.price) + " / mês</strong></a>"
-        ).join("") || '<p class="empty-state">Nenhum plano disponível.</p>';
-      plans.setAttribute("aria-busy", "false");
-    }
-
-    const team = $("#home-team-preview");
-    if (team) {
-      const people = BARBERS.filter((person) => person.id !== "sem-preferencia").slice(0, 3);
-      team.innerHTML =
-        people.map((person) => {
-          const photoHtml = person.photo
-            ? '<img class="home-team-photo" src="' + escapeHTML(person.photo) + '" alt="' + escapeHTML(person.name) + '">'
-            : '<span class="home-team-monogram" aria-hidden="true">' + escapeHTML(person.initials || initials(person.name)) + "</span>";
-          return (
-            '<a class="home-team-item" href="agendar.html?barber=' + encodeURIComponent(person.id) + '">' +
-            photoHtml +
-            "<span><strong>" + escapeHTML(person.name) + "</strong><br>" + escapeHTML(person.role) + "</span>" +
-            '<span class="text-link">Agendar <span aria-hidden="true">→</span></span></a>'
-          );
-        }).join("") || '<p class="empty-state">Nenhum profissional disponível.</p>';
-      team.setAttribute("aria-busy", "false");
-    }
+  function renderHomePlans() {
+    const grid = $("#home-club-grid");
+    if (!grid) return;
+    const preferred = ["essencial-corte", "essencial-corte-barba"];
+    const chosen = preferred.map((id) => PLANS.find((plan) => plan.id === id)).filter(Boolean);
+    PLANS.forEach((plan) => {
+      if (chosen.length < 2 && !chosen.some((item) => item.id === plan.id)) chosen.push(plan);
+    });
+    grid.innerHTML = chosen.map((plan) => {
+      const soldOut = plan.slots === 0 || plan.badge === "Esgotado";
+      const action = soldOut ? "Entrar na lista de espera" : "Consultar este plano";
+      return '<article class="home-club-card"><h3>' + escapeHTML(plan.name) + '</h3>' +
+        '<p>' + escapeHTML(plan.days || "Consulte os dias de atendimento") + '</p>' +
+        '<div class="home-club-card-footer"><div class="home-club-price">' + money(plan.price) + '<span> / mês</span></div>' +
+        '<a class="button button-small" href="agendar.html?plano=' + encodeURIComponent(plan.id) + '">' + action + ' <span aria-hidden="true">→</span></a></div></article>';
+    }).join("") || '<p class="empty-state">Nenhum plano disponível no momento. Fale com a barbearia para consultar opções.</p>';
+    grid.setAttribute("aria-busy", "false");
   }
 
   function localISO(date) {
@@ -1444,8 +1419,7 @@
   }
 
   function renderAllViews() {
-    renderFeaturedServices();
-    renderHomePreviews();
+    renderHomePlans();
     renderCatalog();
     renderPlans();
     renderTeam();

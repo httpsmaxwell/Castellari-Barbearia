@@ -10,7 +10,7 @@ const os = require('node:os');
 
 let browser, server, origin;
 before(async () => {
-  const allowed = new Set(['agendar.html', 'castellari.css', 'castellari.js', 'castellari-data.js']);
+  const allowed = new Set(['index.html', 'agendar.html', 'castellari.css', 'castellari.js', 'castellari-data.js']);
   server = createServer(async (req, res) => {
     const file = new URL(req.url, 'http://localhost').pathname.slice(1);
     if (!allowed.has(file) && !/^img\/equipe\/[a-z0-9-]+\.jpg$/.test(file)) { res.writeHead(404).end(); return; }
@@ -344,6 +344,37 @@ test('mobile: password recovery sends the email and keeps the selected booking',
     await page.locator('#booking-dialog-close').click();
     assert.equal(await page.locator('.booking-recap-box').innerText(), recap);
     assert.equal(await page.evaluate(() => window.bookingTest.bookings.length), 0);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('homepage: booking stays prominent and two plans replace the service and team previews', async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 700 }, reducedMotion: 'reduce' });
+  try {
+    await context.addInitScript(() => { window.bookingTest = { bookings: [] }; });
+    await context.route('**/*', route => {
+      const url = new URL(route.request().url());
+      if (url.origin !== origin) return route.abort();
+      if (url.pathname === '/castellari-firebase.js') return route.fulfill({ contentType: 'text/javascript', body: firebaseFixture });
+      return route.continue();
+    });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(origin + '/index.html');
+    assert.equal(await page.locator('.hero-booking-button').getAttribute('href'), 'agendar.html');
+    assert.equal(await page.locator('.hero-actions a[href="#clube"]').count(), 1);
+    assert.equal(await page.locator('#featured-services').count(), 0);
+    assert.equal(await page.locator('#home-team-preview').count(), 0);
+    assert.deepEqual(await page.locator('.home-club-card h3').allTextContents(), ['ESSENCIAL - Corte', 'ESSENCIAL - Corte + Barba']);
+    assert.deepEqual(await page.locator('.home-club-card a').evaluateAll(links => links.map(link => new URL(link.href).searchParams.get('plano'))), ['essencial-corte', 'essencial-corte-barba']);
+    assert.equal(await page.locator('a[href="planos.html"]').count() > 0, true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-home-plans-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const cards = await page.locator('.home-club-card').evaluateAll(items => items.map(item => item.getBoundingClientRect().top));
+    assert.equal(cards[0], cards[1]);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });
