@@ -1323,6 +1323,125 @@ a.service-card:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 
+.booking-block > .booking-service-intro {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.booking-quick-choices {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-quick-choice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 70px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+
+.booking-quick-choice:hover,
+.booking-quick-choice.is-selected {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, var(--surface));
+}
+
+.booking-quick-check {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.booking-quick-choice.is-selected .booking-quick-check {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #111;
+}
+
+.booking-quick-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.booking-quick-text strong {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.booking-quick-text small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.booking-quick-price {
+  color: var(--green);
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.booking-catalog-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.booking-catalog-toggle:hover {
+  border-color: var(--gold);
+}
+
+.booking-catalog-toggle span {
+  color: var(--gold);
+  font-size: 24px;
+  line-height: 1;
+  transition: transform .16s ease;
+}
+
+.booking-catalog-toggle[aria-expanded="true"] span {
+  transform: rotate(180deg);
+}
+
+.booking-catalog-panel {
+  padding-top: 18px;
+}
+
+.booking-catalog-panel .field {
+  margin-bottom: 12px;
+}
+
+#selected-services-bar {
+  margin: 18px 0 0;
+}
+
 .booking-service-tabs::-webkit-scrollbar {
   display: none;
 }
@@ -2269,6 +2388,10 @@ body.booking-dialog-open {
 
   .skeleton-card,
   .skeleton-line {
+    animation: none;
+  }
+
+  .booking-block:not([hidden]) {
     animation: none;
   }
 }

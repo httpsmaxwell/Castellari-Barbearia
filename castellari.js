@@ -478,10 +478,16 @@
     let selectedTime = timeSlotsForDuration(0).includes(saved.selectedTime) ? saved.selectedTime : null;
 
     const serviceRoot = $("#booking-services");
+    const quickChoicesRoot = $("#booking-quick-choices");
     const serviceTabsRoot = $("#booking-service-tabs");
     const selectedChipsRoot = $("#selected-services-chips");
     const searchInput = $("#booking-service-search");
-    let activeServiceTab = "featured";
+    let activeServiceTab = "all";
+    const quickChoices = [
+      { label: "Corte", ids: ["corte-tradicional"] },
+      { label: "Barba", ids: ["barba-tradicional"] },
+      { label: "Corte + barba", ids: ["corte-tradicional", "barba-tradicional"] },
+    ];
 
     function showBookingAlert(msg) {
       const errEl = $("#booking-error");
@@ -525,13 +531,26 @@
     function renderServiceTabs() {
       if (!serviceTabsRoot) return;
       const tabs = [
-        { key: "featured", label: "Em Alta" },
-        ...CATEGORIES.map((c) => ({ key: c, label: c })),
         { key: "all", label: "Todos" },
+        ...CATEGORIES.map((c) => ({ key: c, label: c })),
       ];
       serviceTabsRoot.innerHTML = tabs.map((t) =>
-        '<button type="button" role="tab" class="service-tab-pill' + (activeServiceTab === t.key ? " is-active" : "") + '" data-service-tab="' + escapeHTML(t.key) + '" aria-selected="' + String(activeServiceTab === t.key) + '">' + escapeHTML(t.label) + "</button>"
+        '<button type="button" class="service-tab-pill' + (activeServiceTab === t.key ? " is-active" : "") + '" data-service-tab="' + escapeHTML(t.key) + '" aria-pressed="' + String(activeServiceTab === t.key) + '">' + escapeHTML(t.label) + "</button>"
       ).join("");
+    }
+
+    function renderQuickChoices() {
+      quickChoicesRoot.innerHTML = quickChoices.filter((choice) =>
+        choice.ids.every((id) => SERVICES.some((service) => service.id === id))
+      ).map((choice) => {
+        const services = choice.ids.map((id) => SERVICES.find((service) => service.id === id));
+        const active = selected.size === choice.ids.length && choice.ids.every((id) => selected.has(id));
+        const price = services.reduce((sum, service) => sum + Number(service.price || 0), 0);
+        const duration = services.reduce((sum, service) => sum + Number(service.duration || 0), 0);
+        return '<button type="button" class="booking-quick-choice' + (active ? ' is-selected' : '') + '" data-quick-choice="' + escapeHTML(choice.ids.join(',')) + '" aria-pressed="' + String(active) + '">' +
+          '<span class="booking-quick-check" aria-hidden="true">✓</span><span class="booking-quick-text"><strong>' + escapeHTML(choice.label) + '</strong><small>' + duration + ' min</small></span><span class="booking-quick-price">' + money(price) + '</span></button>';
+      }).join("");
+      quickChoicesRoot.hidden = !quickChoicesRoot.children.length;
     }
 
     function renderServiceList() {
@@ -540,9 +559,6 @@
       let items = SERVICES;
       if (query) {
         items = SERVICES.filter((s) => normalize(s.name + " " + s.desc + " " + s.category).includes(query));
-      } else if (activeServiceTab === "featured") {
-        items = SERVICES.filter((s) => s.featured);
-        if (!items.length) items = SERVICES.slice(0, 8);
       } else if (activeServiceTab !== "all") {
         items = SERVICES.filter((s) => s.category === activeServiceTab);
       }
@@ -564,7 +580,33 @@
 
     renderServiceTabs();
     renderServiceList();
+    renderQuickChoices();
     renderSelectedChips();
+
+    const catalogPanel = $("#booking-catalog-panel");
+    const catalogToggle = $("#booking-catalog-toggle");
+    catalogToggle.addEventListener("click", () => {
+      const expanded = catalogPanel.hidden;
+      catalogPanel.hidden = !expanded;
+      catalogToggle.setAttribute("aria-expanded", String(expanded));
+      catalogToggle.firstChild.textContent = expanded ? "Ocultar catálogo " : "Ver todos os serviços ";
+    });
+    quickChoicesRoot.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-quick-choice]");
+      if (!button) return;
+      const ids = button.dataset.quickChoice.split(",");
+      selected.clear();
+      ids.forEach((id) => selected.add(id));
+      clearBookingAlert();
+      updateSelectedCount();
+      renderSelectedChips();
+      renderServiceList();
+      renderQuickChoices();
+      $$("[data-quick-choice]", quickChoicesRoot).find((item) => item.dataset.quickChoice === ids.join(","))?.focus();
+      renderTimeButtons();
+      persistBooking();
+      updateSummary();
+    });
 
     if (serviceTabsRoot) {
       serviceTabsRoot.addEventListener("click", (event) => {
@@ -585,6 +627,7 @@
         updateSelectedCount();
         renderSelectedChips();
         renderServiceList();
+        renderQuickChoices();
         persistBooking();
         updateSummary();
       });
@@ -592,6 +635,7 @@
 
     const selectedCount = $("#selected-service-count");
     const updateSelectedCount = () => {
+      $("#selected-services-bar").hidden = selected.size === 0;
       if (selectedCount) {
         selectedCount.textContent = selected.size + (selected.size === 1 ? " serviço selecionado" : " serviços selecionados");
       }
@@ -1089,6 +1133,7 @@
       clearBookingAlert();
       updateSelectedCount();
       renderSelectedChips();
+      renderQuickChoices();
       renderTimeButtons();
       persistBooking();
       updateSummary();
@@ -1102,6 +1147,7 @@
         updateSelectedCount();
         renderSelectedChips();
         renderServiceList();
+        renderQuickChoices();
         renderTimeButtons();
         persistBooking();
         updateSummary();
@@ -1262,6 +1308,7 @@
       renderServiceTabs();
       renderServiceList();
       renderSelectedChips();
+      renderQuickChoices();
       populateBarberSelect(barberSelect.value);
       renderBarbersGrid();
       renderTimeButtons();

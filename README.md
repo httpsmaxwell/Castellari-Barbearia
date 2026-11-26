@@ -12,6 +12,8 @@ Site estático multipágina com autenticação e operações de agenda executada
 - `conta.html` — autenticação, histórico e promoções
 - `admin.html` — agenda, catálogo, promoções e configurações
 
+No agendamento, a escolha de serviços começa com Corte, Barba e Corte + barba. A opção “Ver todos os serviços” abre a busca e o catálogo completo para outros atendimentos e combinações. Os preços e durações dessas escolhas rápidas são calculados a partir dos mesmos serviços do catálogo.
+
 ## Estrutura
 
 - `castellari.css` — identidade visual, temas e responsividade
