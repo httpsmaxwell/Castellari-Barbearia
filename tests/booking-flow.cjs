@@ -150,6 +150,13 @@ test('mobile: summary, email login, contact, explicit confirmation and duplicate
 test('desktop: signed-in user skips login, edits contact, and session loss requires login again', async () => {
   const { context, page, next, errors } = await openBooking({ desktop: true, signedIn: true, light: true, failProfile: true });
   try {
+    assert.equal(await page.locator('.booking-summary').isVisible(), false);
+    const stepperTop = await page.locator('.booking-stepper').evaluate(el => el.getBoundingClientRect().top);
+    assert.ok(stepperTop >= 0 && stepperTop <= 32, 'The active step should open near the top of the notebook viewport');
+    await page.reload();
+    assert.equal(await page.locator('[data-step-indicator="4"]').getAttribute('aria-current'), 'step');
+    const restoredTop = await page.locator('.booking-stepper').evaluate(el => el.getBoundingClientRect().top);
+    assert.ok(restoredTop >= 0 && restoredTop <= 32, 'A restored booking should reopen at its active step');
     await next.click();
     assert.equal(await page.locator('#booking-login-panel').isVisible(), false);
     assert.equal(await page.locator('#client-name').isVisible(), true);

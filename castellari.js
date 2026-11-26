@@ -762,20 +762,11 @@
       updateSummary();
     });
 
-    function scrollToActiveStep(stepNum) {
-      if (!stepNum || stepNum === 1) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      setTimeout(() => {
-        const targetEl = $(".booking-stepper") || $("#booking-form");
-        if (!targetEl) return;
-        const header = $(".site-header");
-        const offset = (header ? header.offsetHeight : 56) + 12;
-        const rect = targetEl.getBoundingClientRect();
-        const top = rect.top + (window.pageYOffset || document.documentElement.scrollTop) - offset;
-        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-      }, 60);
+    function scrollToActiveStep() {
+      const targetEl = $(".booking-stepper") || $("#booking-form");
+      if (!targetEl) return;
+      const top = targetEl.getBoundingClientRect().top + window.scrollY - 16;
+      window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
     }
 
     const barberSelect = $("#booking-barber");
@@ -821,6 +812,7 @@
         block.hidden = step !== currentStep;
       });
       document.body.classList.toggle("booking-selection-step", currentStep <= 3);
+      document.body.classList.toggle("booking-review-step", currentStep === 4);
 
       $$("[data-step-indicator]").forEach((item) => {
         const number = Number(item.dataset.stepIndicator);
@@ -829,11 +821,8 @@
         else item.removeAttribute("aria-current");
       });
 
-      if (scroll) {
-        scrollToActiveStep(currentStep);
-      }
-
       updateSummary();
+      if (scroll) scrollToActiveStep();
     }
 
     const barbersGrid = $("#booking-barbers-grid");
@@ -877,6 +866,11 @@
       item.addEventListener("click", () => {
         const targetStep = Number(item.dataset.stepIndicator);
         goToStep(targetStep);
+      });
+      item.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        goToStep(Number(item.dataset.stepIndicator));
       });
     });
 
@@ -1316,6 +1310,7 @@
     persistBooking();
     updateSummary();
     refreshAvailability();
+    if (initialStep > 1) scrollToActiveStep();
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();

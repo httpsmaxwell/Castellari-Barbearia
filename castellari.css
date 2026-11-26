@@ -1851,6 +1851,65 @@ a.service-card:focus-visible {
   font: 600 27px/1.1 var(--serif);
 }
 
+@media (min-width: 961px) {
+  body.booking-review-step .booking-layout {
+    grid-template-columns: minmax(0, 820px);
+    justify-content: center;
+  }
+
+  body.booking-review-step .booking-summary {
+    display: none;
+  }
+}
+
+@media (min-width: 961px) and (max-width: 1440px) {
+  body[data-page="booking"] .page-hero {
+    padding: 34px 0 30px;
+  }
+
+  body[data-page="booking"] .page-title {
+    font-size: clamp(44px, 4.2vw, 58px);
+  }
+
+  body[data-page="booking"] .section {
+    padding: 40px 0 60px;
+  }
+
+  body[data-page="booking"] .booking-block,
+  body[data-page="booking"] .booking-summary {
+    padding: 22px;
+  }
+
+  body[data-page="booking"] .barbers-selection-grid {
+    gap: 10px;
+    margin: 14px 0;
+  }
+
+  body[data-page="booking"] .barber-choice-card {
+    gap: 7px;
+    padding: 12px 10px;
+  }
+
+  body[data-page="booking"] .barber-card-avatar-wrap {
+    width: 64px;
+    height: 64px;
+  }
+
+  body[data-page="booking"] .choice-grid#booking-days,
+  body[data-page="booking"] .choice-grid#booking-times {
+    gap: 7px;
+  }
+
+  body[data-page="booking"] .choice-button {
+    min-height: 46px;
+  }
+
+  body[data-page="booking"] .step-nav-row {
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+}
+
 .summary-line {
   display: flex;
   justify-content: space-between;
