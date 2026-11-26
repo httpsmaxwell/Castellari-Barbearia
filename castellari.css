@@ -1922,6 +1922,28 @@ a.service-card:focus-visible {
     gap: 7px;
   }
 
+  body[data-page="booking"] .choice-grid#booking-days {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  body[data-page="booking"] .choice-grid#booking-days .choice-button {
+    padding-inline: 4px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  body[data-page="booking"] .choice-grid#booking-times {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  body[data-page="booking"] .choice-grid#booking-times .choice-button {
+    font-size: 12px;
+  }
+
+  body[data-page="booking"] .summary-line {
+    font-size: 11px;
+  }
+
   body[data-page="booking"] .choice-button {
     min-height: 46px;
   }
