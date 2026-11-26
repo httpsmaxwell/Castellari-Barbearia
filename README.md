@@ -1,44 +1,66 @@
 # Barbearia Castellari
 
-Site estático multipágina com autenticação e operações de agenda executadas pelo Firebase.
+Site da Barbearia Castellari, em Manaus, para conhecer os serviços e planos mensais, escolher um profissional e agendar um horário. A interface foi pensada para celular, com tema escuro como padrão e opção de tema claro.
 
-## Páginas
+**Site publicado:** [castellari-barbearia.netlify.app](https://castellari-barbearia.netlify.app/)
 
-- `index.html` — apresentação, acesso ao agendamento e dois exemplos de assinatura mensal com acesso à lista completa de planos
-- `servicos.html` — catálogo com busca e filtros
-- `planos.html` — Clube Castellari
-- `equipe.html` — profissionais
-- `agendar.html` — agendamento e interesse em plano
-- `conta.html` — autenticação, histórico e promoções
-- `admin.html` — agenda, catálogo, promoções e configurações
+## O que o site oferece
 
-No agendamento, a escolha de serviços começa com Corte, Barba, Corte Infantil, Barboterapia, Limpeza de Sobrancelha e Terapia Capilar. Essas opções podem ser combinadas livremente. A opção “Ver todos os serviços” abre a busca e o catálogo completo. Os preços e durações são obtidos dos mesmos serviços do catálogo. No celular, as três telas de escolha são compactas e os botões de navegação ficam visíveis durante a rolagem. A escolha do profissional ou do horário só avança após tocar em “Próximo”.
+- **Agendamento em quatro etapas:** serviços, profissional, data e horário, e revisão. Os serviços podem ser combinados; seis opções frequentes aparecem primeiro, com acesso ao catálogo completo.
+- **Confirmação com conta:** quem ainda não entrou pode usar Google ou e-mail e senha, criar uma conta ou recuperar a senha sem perder a seleção. Depois de informar nome e WhatsApp, volta ao resumo para confirmar a reserva.
+- **Clube Castellari:** a página inicial apresenta dois exemplos de assinatura mensal e encaminha para a comparação dos seis planos. O formulário registra uma **solicitação de interesse**; não contrata nem cobra a assinatura automaticamente.
+- **Área do cliente:** autenticação, histórico de agendamentos e promoções elegíveis.
+- **Painel administrativo:** gestão de agenda, catálogo, promoções e configurações, sujeita às permissões do Firestore.
 
-## Estrutura
+| Página | Finalidade |
+| --- | --- |
+| [`index.html`](index.html) | Apresentação, agendamento e destaque dos planos mensais |
+| [`servicos.html`](servicos.html) | Catálogo de serviços com busca e filtros |
+| [`planos.html`](planos.html) | Planos mensais do Clube Castellari |
+| [`equipe.html`](equipe.html) | Profissionais |
+| [`agendar.html`](agendar.html) | Agendamento e solicitação de interesse em plano |
+| [`conta.html`](conta.html) | Conta, histórico e promoções |
+| [`admin.html`](admin.html) | Administração |
 
-- `castellari.css` — identidade visual, temas e responsividade
-- `castellari-data.js` — catálogo local inicial
-- `castellari.js` — interface e fluxo de agendamento
-- `castellari-firebase.js` / `firebase-config.js` — Firebase Web SDK
-- `firestore.rules` / `firestore.indexes.json` — regras e índices do Firestore
+## Tecnologias e estrutura
 
-## Firebase
+O projeto usa HTML, CSS e JavaScript sem etapa de build. A autenticação e os dados são acessados pelo Firebase Web SDK, com Firebase Authentication e Cloud Firestore. O Netlify publica os arquivos estáticos.
 
-Reservas, cancelamentos e solicitações de plano usam o SDK Web e as regras do Firestore. O cliente valida expediente, preço e duração a partir do catálogo, e uma transação bloqueia os intervalos selecionados. As regras confirmam identidade, propriedade, campos permitidos e dados canónicos do plano. Como a validação de reservas corre no navegador, não trate o preço gravado como confirmação de pagamento ou valor inviolável.
+- [`castellari.css`](castellari.css): identidade visual, temas e layouts responsivos.
+- [`castellari-data.js`](castellari-data.js): catálogo inicial de serviços, planos e profissionais.
+- [`castellari.js`](castellari.js): interface pública e fluxo de agendamento.
+- [`castellari-firebase.js`](castellari-firebase.js): integração com Authentication e Firestore.
+- [`firebase-config.js`](firebase-config.js): configuração pública do aplicativo Web Firebase.
+- [`firestore.rules`](firestore.rules) e [`firestore.indexes.json`](firestore.indexes.json): regras de acesso e índices.
+- [`tests/booking-flow.cjs`](tests/booking-flow.cjs): testes de interface com Firebase simulado.
 
-Para habilitar os fluxos em um projeto Firebase:
+## Executar localmente
 
-1. Na raiz do projeto, publique regras e índices: `firebase deploy --only firestore:rules,firestore:indexes`.
-2. Entre em `admin.html`, importe o catálogo inicial se necessário e confira dias e horários de atendimento.
-3. Dados antigos de disponibilidade que contenham identificadores de clientes devem ser sanitizados antes da consulta pública; esta operação precisa ser feita por um processo administrativo com credenciais autorizadas.
+Como não há build, basta servir a pasta do projeto por HTTP. Por exemplo, com Python 3:
 
-O SDK do navegador precisa de um projeto Firebase configurado em `firebase-config.js`. A aplicação não utiliza Cloud Functions e não exige o plano Blaze para estes fluxos. Sem validação de servidor, um cliente autenticado adulterado ainda pode forjar preço/duração dentro das regras; confirme o valor no atendimento antes de cobrar. Também não há limite de frequência contra criação de várias contas.
+```powershell
+python -m http.server 8000
+```
 
-As regras limitam cada cliente às próprias reservas e promoções elegíveis; os documentos públicos de disponibilidade não devem conter identificadores de clientes. O Firebase Web API key é configuração pública do cliente: o controle de acesso depende das regras do Firestore.
+Abra `http://localhost:8000/`. As páginas e o catálogo inicial podem ser explorados localmente. Login, reservas e outras operações persistentes exigem um projeto Firebase configurado e autorizado para o domínio usado.
 
-## Testes do fluxo de agendamento
+### Configurar o Firebase
 
-Os testes de interface usam Chrome e Playwright com Firebase simulado, dados fictícios e servidor local. Nenhuma reserva é enviada ao Firebase. Cobrem login, criação de conta, recuperação de senha, contato, confirmação explícita, seleção de horário, controles durante a rolagem, erros e proteção contra cliques repetidos em telas de celular e desktop.
+1. Configure o aplicativo Web em [`firebase-config.js`](firebase-config.js) e habilite no Firebase Authentication os provedores usados pelo site: Google e e-mail/senha. Configure também os domínios autorizados para login.
+2. Crie o banco Cloud Firestore e confira o projeto selecionado antes de publicar as regras. O arquivo [`.firebaserc`](.firebaserc) contém um projeto padrão; confirme que ele é o destino desejado.
+3. Publique as regras e os índices a partir da raiz do repositório:
+
+   ```powershell
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
+
+4. Com acesso administrativo autorizado, confira o catálogo, importe os dados iniciais se necessário e ajuste dias e horários de atendimento em [`admin.html`](admin.html).
+
+O aplicativo **não usa Cloud Functions** e estes fluxos não exigem o plano Blaze. A chave Web do Firebase é uma configuração pública do navegador; a proteção dos dados depende das regras do Firestore e das permissões atribuídas aos usuários. Não coloque credenciais administrativas ou contas de serviço no código do cliente.
+
+## Testes
+
+Os testes de interface usam Node.js, Playwright e Chrome em um servidor local com dados fictícios. A integração Firebase é simulada nos testes: **nenhuma reserva é gravada no projeto real**. O conjunto cobre escolha de serviços e horários, navegação no celular e desktop, login, criação de conta, recuperação de senha, contato, confirmação explícita e erros.
 
 No PowerShell, com Node.js e Chrome instalados:
 
@@ -48,8 +70,12 @@ $env:NODE_PATH = Join-Path $env:TEMP 'castellari-ui-check\node_modules'
 node --test tests/booking-flow.cjs
 ```
 
-Para usar Edge, defina `$env:BROWSER_CHANNEL = 'msedge'` antes de executar. As capturas de tela são salvas na pasta temporária do sistema.
+Para usar Edge, defina `$env:BROWSER_CHANNEL = 'msedge'` antes do teste. As capturas geradas pelos testes ficam na pasta temporária do sistema.
 
-## Dados a confirmar
+## Limites conhecidos
 
-Preços, benefícios, vagas, profissionais, telefone, endereço, horários e redes sociais devem ser confirmados pela barbearia antes do uso oficial.
+- Disponibilidade e bloqueio de intervalos usam transações no Firestore. As regras controlam identidade, propriedade e campos permitidos, mas a validação de preço e duração da reserva ainda acontece no navegador. Um cliente autenticado que altere a requisição pode forjar esses valores dentro do que as regras aceitam; confirme o valor no atendimento antes de cobrar.
+- O projeto não processa pagamentos nem ativa assinaturas automaticamente. A solicitação de plano deve ser tratada pela equipe.
+- Não há limite de frequência próprio contra criação de várias contas.
+- Documentos antigos de disponibilidade que contenham identificadores de clientes precisam ser sanitizados por um processo administrativo autorizado antes de qualquer leitura pública.
+- Preços, benefícios, vagas, profissionais, telefone, endereço, horários e redes sociais devem ser confirmados pela barbearia antes do uso oficial.
