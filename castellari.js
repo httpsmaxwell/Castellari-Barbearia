@@ -263,11 +263,20 @@
     grid.innerHTML = chosen.map((plan) => {
       const soldOut = plan.slots === 0 || plan.badge === "Esgotado";
       const action = soldOut ? "Entrar na lista de espera" : "Consultar este plano";
-      return '<article class="home-club-card"><h3>' + escapeHTML(plan.name) + '</h3>' +
+      return '<article class="home-club-card"><span class="home-club-plan-label">Assinatura mensal</span><h3>' + escapeHTML(plan.name) + '</h3>' +
         '<p>' + escapeHTML(plan.days || "Consulte os dias de atendimento") + '</p>' +
-        '<div class="home-club-card-footer"><div class="home-club-price">' + money(plan.price) + '<span> / mês</span></div>' +
+        '<div class="home-club-card-footer"><div class="home-club-price"><small>Mensalidade</small>' + money(plan.price) + '<span> por mês</span></div>' +
         '<a class="button button-small" href="agendar.html?plano=' + encodeURIComponent(plan.id) + '">' + action + ' <span aria-hidden="true">→</span></a></div></article>';
     }).join("") || '<p class="empty-state">Nenhum plano disponível no momento. Fale com a barbearia para consultar opções.</p>';
+    const more = $("#home-club-more");
+    more.hidden = PLANS.length === 0;
+    if (PLANS.length) {
+      const remaining = PLANS.length - chosen.length;
+      $("#home-club-more-copy").textContent = remaining > 0
+        ? "Além destes, há mais " + remaining + (remaining === 1 ? " plano mensal" : " planos mensais") + " para comparar."
+        : "Compare benefícios e condições de todos os planos mensais.";
+      $("#home-club-all-link").textContent = "Ver os " + PLANS.length + (PLANS.length === 1 ? " plano mensal →" : " planos mensais →");
+    }
     grid.setAttribute("aria-busy", "false");
   }
 

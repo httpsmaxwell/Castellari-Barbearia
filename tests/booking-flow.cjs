@@ -10,7 +10,7 @@ const os = require('node:os');
 
 let browser, server, origin;
 before(async () => {
-  const allowed = new Set(['index.html', 'agendar.html', 'castellari.css', 'castellari.js', 'castellari-data.js']);
+  const allowed = new Set(['index.html', 'planos.html', 'agendar.html', 'castellari.css', 'castellari.js', 'castellari-data.js']);
   server = createServer(async (req, res) => {
     const file = new URL(req.url, 'http://localhost').pathname.slice(1);
     if (!allowed.has(file) && !/^img\/equipe\/[a-z0-9-]+\.jpg$/.test(file)) { res.writeHead(404).end(); return; }
@@ -367,10 +367,18 @@ test('homepage: booking stays prominent and two plans replace the service and te
     assert.equal(await page.locator('#featured-services').count(), 0);
     assert.equal(await page.locator('#home-team-preview').count(), 0);
     assert.deepEqual(await page.locator('.home-club-card h3').allTextContents(), ['ESSENCIAL - Corte', 'ESSENCIAL - Corte + Barba']);
+    assert.equal(await page.locator('.home-club-plan-label').count(), 2);
+    assert.deepEqual(await page.locator('.home-club-price small').allTextContents(), ['Mensalidade', 'Mensalidade']);
+    assert.match(await page.locator('#home-club-more-copy').innerText(), /mais 4 planos mensais/);
+    assert.equal(await page.locator('#home-club-all-link').innerText(), 'Ver os 6 planos mensais →');
     assert.deepEqual(await page.locator('.home-club-card a').evaluateAll(links => links.map(link => new URL(link.href).searchParams.get('plano'))), ['essencial-corte', 'essencial-corte-barba']);
     assert.equal(await page.locator('a[href="planos.html"]').count() > 0, true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-home-plans-mobile.png'), fullPage: true });
+    await page.locator('#home-club-all-link').click();
+    assert.equal(await page.locator('h1').innerText(), 'Planos mensais');
+    assert.equal(await page.locator('.plan-card h3').count(), 6);
+    await page.goto(origin + '/index.html');
     await page.setViewportSize({ width: 1280, height: 900 });
     const cards = await page.locator('.home-club-card').evaluateAll(items => items.map(item => item.getBoundingClientRect().top));
     assert.equal(cards[0], cards[1]);

@@ -4,7 +4,7 @@ Site estático multipágina com autenticação e operações de agenda executada
 
 ## Páginas
 
-- `index.html` — apresentação, acesso ao agendamento e dois planos do Clube em destaque
+- `index.html` — apresentação, acesso ao agendamento e dois exemplos de assinatura mensal com acesso à lista completa de planos
 - `servicos.html` — catálogo com busca e filtros
 - `planos.html` — Clube Castellari
 - `equipe.html` — profissionais
