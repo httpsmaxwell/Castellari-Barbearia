@@ -2137,6 +2137,19 @@ a.service-card:focus-visible {
   width: 100%;
 }
 
+.google-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
