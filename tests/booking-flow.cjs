@@ -52,6 +52,10 @@ const firebaseFixture = `
       fixture.registered = { email, password };
       return signIn();
     },
+    resetPassword: async email => {
+      if (fixture.failRecovery) throw new Error('Não foi possível enviar o link. Tente novamente.');
+      fixture.recoveryEmails = [...(fixture.recoveryEmails || []), email];
+    },
     formatFirebaseError: error => error.message,
     createBooking: async (payload) => {
       fixture.bookings.push(payload);
@@ -235,5 +239,29 @@ test('mobile: service controls follow scrolling; selecting a time waits for Pró
     assert.equal(await page.locator('[data-booking-step="3"]').isVisible(), true);
     await page.locator('#booking-continue').click();
     assert.equal(await page.locator('[data-booking-step="4"]').isVisible(), true);
+  } finally { await context.close(); }
+});
+
+test('mobile: password recovery sends the email and keeps the selected booking', async () => {
+  const { context, page, next, errors } = await openBooking({ failRecovery: true });
+  try {
+    const recap = await page.locator('.booking-recap-box').innerText();
+    await next.click();
+    await page.locator('#booking-email').fill('cliente@example.test');
+    await page.getByRole('button', { name: 'Esqueci minha senha' }).click();
+    assert.equal(await page.locator('#booking-recovery-email').inputValue(), 'cliente@example.test');
+    await page.getByRole('button', { name: 'Enviar link de recuperação' }).click();
+    await page.locator('#booking-dialog-error').waitFor({ state: 'visible' });
+    assert.equal(await page.getByRole('dialog').isVisible(), true);
+    await page.evaluate(() => { window.bookingTest.failRecovery = false; });
+    await page.getByRole('button', { name: 'Enviar link de recuperação' }).click();
+    await page.getByText('Se esse e-mail tiver uma conta').waitFor({ state: 'visible' });
+    assert.deepEqual(await page.evaluate(() => window.bookingTest.recoveryEmails), ['cliente@example.test']);
+    await page.getByRole('button', { name: 'Voltar para o login' }).click();
+    assert.equal(await page.locator('#booking-login-form').isVisible(), true);
+    await page.locator('#booking-dialog-close').click();
+    assert.equal(await page.locator('.booking-recap-box').innerText(), recap);
+    assert.equal(await page.evaluate(() => window.bookingTest.bookings.length), 0);
+    assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });

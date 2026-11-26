@@ -603,9 +603,11 @@
     let submittingBooking = false;
     let loginPending = false;
     let registering = false;
+    let recovering = false;
     const detailsDialog = $("#booking-details-dialog");
     const loginForm = $("#booking-login-form");
     const registerForm = $("#booking-register-form");
+    const recoveryForm = $("#booking-recovery-form");
     const contactForm = $("#booking-contact-form");
 
     function contactIsConfirmed() {
@@ -636,16 +638,45 @@
     function setRegisterMode(enabled) {
       if (loginPending) return;
       registering = enabled;
+      recovering = false;
       loginForm.hidden = enabled;
       registerForm.hidden = !enabled;
+      recoveryForm.hidden = true;
       $("#booking-create-prompt").hidden = enabled;
       $("#booking-login-prompt").hidden = !enabled;
+      $("#booking-forgot-prompt").hidden = enabled;
+      $("#booking-recovery-back").hidden = true;
+      $("#booking-google-login").hidden = false;
       $("#booking-login-divider").hidden = enabled;
       $("#booking-dialog-title").textContent = enabled ? "Crie sua conta" : "Entre na sua conta";
       $("#booking-dialog-description").textContent = enabled
         ? "Seu horário continua selecionado. Depois, informe seu nome e WhatsApp."
         : "Seu horário continua selecionado. Entre para seguir com o agendamento.";
       $("#booking-dialog-error").hidden = true;
+      $("#booking-dialog-status").hidden = true;
+      $("#booking-dialog-title").focus();
+    }
+
+    function setRecoveryMode(enabled) {
+      if (loginPending) return;
+      recovering = enabled;
+      registering = false;
+      loginForm.hidden = enabled;
+      registerForm.hidden = true;
+      recoveryForm.hidden = !enabled;
+      $("#booking-create-prompt").hidden = enabled;
+      $("#booking-login-prompt").hidden = true;
+      $("#booking-forgot-prompt").hidden = enabled;
+      $("#booking-recovery-back").hidden = !enabled;
+      $("#booking-google-login").hidden = enabled;
+      $("#booking-login-divider").hidden = enabled;
+      $("#booking-dialog-title").textContent = enabled ? "Recupere sua senha" : "Entre na sua conta";
+      $("#booking-dialog-description").textContent = enabled
+        ? "Informe o e-mail da sua conta. Seu agendamento continua selecionado enquanto você recupera a senha."
+        : "Seu horário continua selecionado. Entre para seguir com o agendamento.";
+      $("#booking-dialog-error").hidden = true;
+      $("#booking-dialog-status").hidden = true;
+      if (enabled) $("#booking-recovery-email").value = $("#booking-email").value.trim();
       $("#booking-dialog-title").focus();
     }
 
@@ -653,7 +684,7 @@
       if (submittingBooking) return;
       clearBookingAlert();
       renderDetailsDialog();
-      if (!currentUser && registering) setRegisterMode(false);
+      if (!currentUser && (registering || recovering)) setRegisterMode(false);
       if (!detailsDialog.open) detailsDialog.showModal();
       document.body.classList.add("booking-dialog-open");
       // Focus the heading so opening the dialog does not summon the mobile keyboard.
@@ -670,6 +701,8 @@
     $("#booking-edit-contact").addEventListener("click", openDetailsDialog);
     $("#booking-show-register").addEventListener("click", () => setRegisterMode(true));
     $("#booking-show-login").addEventListener("click", () => setRegisterMode(false));
+    $("#booking-show-recovery").addEventListener("click", () => setRecoveryMode(true));
+    $("#booking-back-to-login").addEventListener("click", () => setRecoveryMode(false));
 
     contactForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1173,6 +1206,34 @@
       signInForBooking("register");
     });
     $("#booking-register-confirm").addEventListener("input", (event) => event.target.setCustomValidity(""));
+    recoveryForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (loginPending) return;
+      const api = fb();
+      if (!api) {
+        showDialogError("Não foi possível enviar o link agora. Aguarde um momento e tente novamente.");
+        return;
+      }
+      loginPending = true;
+      $("#booking-dialog-error").hidden = true;
+      const status = $("#booking-dialog-status");
+      status.textContent = "Enviando…";
+      status.hidden = false;
+      const controls = $$("button, input", $("#booking-login-panel"));
+      controls.forEach((control) => { control.disabled = true; });
+      let sent = false;
+      try {
+        await api.resetPassword($("#booking-recovery-email").value.trim());
+        sent = true;
+        status.textContent = "Se esse e-mail tiver uma conta, você receberá um link para redefinir a senha. Confira também o spam.";
+      } catch (err) {
+        if (detailsDialog.open) showDialogError(api.formatFirebaseError(err));
+      } finally {
+        loginPending = false;
+        status.hidden = !sent;
+        controls.forEach((control) => { control.disabled = false; });
+      }
+    });
 
     const prevButton = $("#booking-prev");
     if (prevButton) {

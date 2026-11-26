@@ -17,10 +17,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme-preference')==='light'){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#f4f0e7';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=10">
+  <link rel="stylesheet" href="castellari.css?v=11">
   <script src="castellari-data.js?v=7" defer></script>
   <script type="module" src="castellari-firebase.js?v=9"></script>
-  <script src="castellari.js?v=11" defer></script>
+  <script src="castellari.js?v=12" defer></script>
 </head>
 <body data-page="booking">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -179,6 +179,7 @@
         <div class="field"><label for="booking-password">Senha</label><input id="booking-password" name="password" type="password" autocomplete="current-password" required></div>
         <button class="button" type="submit">Entrar com e-mail</button>
       </form>
+      <div class="booking-auth-switch" id="booking-forgot-prompt"><button type="button" class="booking-text-button" id="booking-show-recovery">Esqueci minha senha</button></div>
       <div class="booking-auth-switch" id="booking-create-prompt">Ainda não tem conta? <button type="button" class="booking-text-button" id="booking-show-register">Criar conta</button></div>
       <form id="booking-register-form" hidden>
         <div class="field"><label for="booking-register-email">E-mail</label><input id="booking-register-email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="none" required></div>
@@ -187,6 +188,11 @@
         <button class="button" type="submit">Criar conta e continuar</button>
       </form>
       <div class="booking-auth-switch" id="booking-login-prompt" hidden>Já tem conta? <button type="button" class="booking-text-button" id="booking-show-login">Entrar com e-mail</button></div>
+      <form id="booking-recovery-form" hidden>
+        <div class="field"><label for="booking-recovery-email">E-mail da conta</label><input id="booking-recovery-email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="none" required></div>
+        <button class="button" type="submit">Enviar link de recuperação</button>
+      </form>
+      <div class="booking-auth-switch" id="booking-recovery-back" hidden><button type="button" class="booking-text-button" id="booking-back-to-login">Voltar para o login</button></div>
     </div>
     <form id="booking-contact-form" hidden>
       <p class="muted-text" id="booking-signed-user" hidden></p>

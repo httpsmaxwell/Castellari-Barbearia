@@ -36,7 +36,7 @@ As regras limitam cada cliente às próprias reservas e promoções elegíveis; 
 
 ## Testes do fluxo de agendamento
 
-Os testes de interface usam Chrome e Playwright com Firebase simulado, dados fictícios e servidor local. Nenhuma reserva é enviada ao Firebase. Cobrem login, criação de conta, contato, confirmação explícita, seleção de horário, controles durante a rolagem, erros e proteção contra cliques repetidos em telas de celular e desktop.
+Os testes de interface usam Chrome e Playwright com Firebase simulado, dados fictícios e servidor local. Nenhuma reserva é enviada ao Firebase. Cobrem login, criação de conta, recuperação de senha, contato, confirmação explícita, seleção de horário, controles durante a rolagem, erros e proteção contra cliques repetidos em telas de celular e desktop.
 
 No PowerShell, com Node.js e Chrome instalados:
 
