@@ -1593,6 +1593,140 @@ a.service-card:focus-visible {
   display: none;
 }
 
+body.booking-dialog-open {
+  overflow: hidden;
+}
+
+.booking-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .35);
+}
+
+.booking-dialog::backdrop {
+  background: rgba(0, 0, 0, .72);
+}
+
+.booking-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.booking-dialog-close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.booking-dialog h2 {
+  margin: 0 0 12px;
+  font: 600 clamp(26px, 6vw, 34px)/1.15 var(--serif);
+  text-wrap: balance;
+}
+
+.booking-dialog .muted-text {
+  margin: 0 0 20px;
+}
+
+.booking-dialog form {
+  display: grid;
+  gap: 18px;
+}
+
+.booking-dialog .button {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+}
+
+.booking-dialog input {
+  min-width: 0;
+  font-size: 16px;
+}
+
+.booking-login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.booking-login-divider::before,
+.booking-login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.booking-dialog-status {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.booking-contact-recap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.booking-contact-recap > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .booking-dialog {
+    padding: 18px;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  .booking-dialog h2 {
+    font-size: 24px;
+  }
+
+  .booking-dialog .muted-text {
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+
+  .booking-dialog form {
+    gap: 14px;
+  }
+
+  .booking-dialog .field input {
+    min-height: 48px;
+    padding: 10px 12px;
+  }
+
+  .booking-login-divider {
+    margin: 14px 0;
+  }
+}
+
 .booking-success {
   padding: 28px;
   border: 1px solid var(--green-2);
@@ -1981,19 +2115,11 @@ a.service-card:focus-visible {
   }
 
   .booking-sticky-bar {
-    position: fixed;
-    z-index: 45;
-    right: 0;
-    bottom: 0;
-    left: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: 0 -8px 25px rgba(12, 28, 20, .13);
+    margin-top: 16px;
   }
 
   .booking-sticky-bar .button {
@@ -2006,10 +2132,6 @@ a.service-card:focus-visible {
   .booking-sticky-bar .button:disabled {
     opacity: .42;
     cursor: not-allowed;
-  }
-
-  body[data-page="booking"] {
-    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .site-footer {

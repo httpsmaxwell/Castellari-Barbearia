@@ -349,7 +349,6 @@
   }
 
   function refreshAuthUIInBooking() {
-    const authBox = $("#booking-auth-box");
     const planAuthBox = $("#plan-auth-box");
     const signedInfo = $("#booking-signed-user");
     const nameInput = $("#client-name");
@@ -358,7 +357,6 @@
     const planPhoneInput = $("#plan-client-phone");
 
     if (currentUser) {
-      if (authBox) authBox.hidden = true;
       if (planAuthBox) planAuthBox.hidden = true;
       if (signedInfo) {
         signedInfo.hidden = false;
@@ -371,7 +369,6 @@
       if (planNameInput && !planNameInput.value) planNameInput.value = bestName;
       if (planPhoneInput && !planPhoneInput.value) planPhoneInput.value = bestPhone;
     } else {
-      if (authBox) authBox.hidden = false;
       if (planAuthBox) planAuthBox.hidden = false;
       if (signedInfo) signedInfo.hidden = true;
     }
@@ -602,6 +599,77 @@
     updateSelectedCount();
 
     let currentStep = 1;
+    let contactConfirmedUid = null;
+    let submittingBooking = false;
+    let loginPending = false;
+    const detailsDialog = $("#booking-details-dialog");
+    const loginForm = $("#booking-login-form");
+    const contactForm = $("#booking-contact-form");
+
+    function contactIsConfirmed() {
+      return !!currentUser && contactConfirmedUid === currentUser.uid;
+    }
+
+    function showDialogError(message) {
+      const error = $("#booking-dialog-error");
+      error.textContent = message;
+      error.hidden = false;
+      error.focus();
+    }
+
+    function renderDetailsDialog() {
+      const signedIn = !!currentUser;
+      $("#booking-login-panel").hidden = signedIn;
+      contactForm.hidden = !signedIn;
+      $("#booking-dialog-step").textContent = signedIn ? "2 de 2 · Seus dados" : "1 de 2 · Acesso";
+      $("#booking-dialog-title").textContent = signedIn ? "Como podemos falar com você?" : "Entre na sua conta";
+      $("#booking-dialog-description").textContent = signedIn
+        ? "Confira seu nome e WhatsApp. Depois, você volta ao resumo para confirmar."
+        : "Seu horário continua selecionado. Entre para seguir com o agendamento.";
+      $("#booking-dialog-error").hidden = true;
+      refreshAuthUIInBooking();
+      if (detailsDialog.open) $("#booking-dialog-title").focus();
+    }
+
+    function openDetailsDialog() {
+      if (submittingBooking) return;
+      clearBookingAlert();
+      renderDetailsDialog();
+      if (!detailsDialog.open) detailsDialog.showModal();
+      document.body.classList.add("booking-dialog-open");
+      // Focus the heading so opening the dialog does not summon the mobile keyboard.
+      $("#booking-dialog-title").focus();
+    }
+
+    $("#booking-dialog-close").addEventListener("click", () => detailsDialog.close());
+    detailsDialog.addEventListener("close", () => {
+      document.body.classList.remove("booking-dialog-open");
+      $("#booking-password").value = "";
+    });
+    $("#booking-edit-contact").addEventListener("click", openDetailsDialog);
+
+    contactForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!currentUser) {
+        renderDetailsDialog();
+        return;
+      }
+      const name = $("#client-name");
+      const phone = $("#client-phone");
+      name.value = name.value.trim();
+      name.setCustomValidity(name.value ? "" : "Informe seu nome.");
+      phone.setCustomValidity(isValidPhone(phone.value) ? "" : "Informe um WhatsApp com DDD (10 ou 11 dígitos).");
+      if (!contactForm.reportValidity()) return;
+      contactConfirmedUid = currentUser.uid;
+      updateSummary();
+      detailsDialog.close();
+    });
+
+    window.addEventListener("castellari:auth-updated", () => {
+      if (!currentUser || currentUser.uid !== contactConfirmedUid) contactConfirmedUid = null;
+      if (detailsDialog.open) renderDetailsDialog();
+      updateSummary();
+    });
 
     function scrollToActiveStep(stepNum) {
       if (!stepNum || stepNum === 1) {
@@ -638,6 +706,7 @@
     );
 
     function goToStep(stepNumber, scroll = true) {
+      if (submittingBooking) return;
       const target = Math.max(1, Math.min(4, stepNumber));
       if (target > 1 && selected.size === 0) {
         showBookingAlert("Você ainda não selecionou nenhum serviço. Escolha pelo menos 1 serviço para continuar.");
@@ -930,13 +999,22 @@
 
       const continueBtn = $("#booking-continue");
       if (continueBtn) {
-        if (currentStep === 4) {
-          continueBtn.textContent = "Confirmar →";
-        } else {
-          continueBtn.textContent = "Próximo →";
-        }
-        continueBtn.disabled = false;
+        continueBtn.textContent = submittingBooking ? "Confirmando…" :
+          currentStep === 4 && contactIsConfirmed() ? "Confirmar →" : "Próximo →";
+        continueBtn.disabled = submittingBooking;
       }
+      const reviewNext = $("#booking-review-next");
+      reviewNext.textContent = submittingBooking ? "Confirmando…" :
+        contactIsConfirmed() ? "Confirmar agendamento →" : "Próximo →";
+      reviewNext.disabled = submittingBooking;
+      $("#booking-edit-contact").disabled = submittingBooking;
+      if (prevBtn) prevBtn.disabled = submittingBooking || currentStep === 1;
+      $("#booking-contact-recap").hidden = !contactIsConfirmed();
+      $("#recap-client-name").textContent = $("#client-name").value.trim();
+      $("#recap-client-phone").textContent = $("#client-phone").value;
+      $("#booking-review-hint").textContent = contactIsConfirmed()
+        ? "Tudo certo? Confirme abaixo para registrar seu agendamento."
+        : "Confira os detalhes e toque em Próximo para continuar.";
 
       if (duplicationAlert) {
         const hasDuplicateCut = services.some(isComboWithCut) && services.some(isStandaloneCut);
@@ -1015,23 +1093,48 @@
       refreshAvailability();
     });
     $("#client-name").addEventListener("input", () => {
+      $("#client-name").setCustomValidity("");
+      contactConfirmedUid = null;
       updateSummary();
     });
     $("#client-phone").addEventListener("input", () => {
+      contactConfirmedUid = null;
       updateSummary();
     });
 
     const bookingGoogleBtn = $("#booking-google-login");
-    if (bookingGoogleBtn) {
-      bookingGoogleBtn.addEventListener("click", async () => {
-        if (!fb()) return;
-        try {
-          await fb().signInWithGoogle();
-        } catch (err) {
-          showBookingAlert(fb().formatFirebaseError(err));
-        }
-      });
+    async function signInForBooking(provider) {
+      if (loginPending) return;
+      const api = fb();
+      if (!api) {
+        showDialogError("Não foi possível carregar o login. Aguarde um momento e tente novamente.");
+        return;
+      }
+      loginPending = true;
+      $("#booking-dialog-error").hidden = true;
+      const status = $("#booking-dialog-status");
+      status.textContent = "Entrando…";
+      status.hidden = false;
+      const loginControls = $$("button, input", $("#booking-login-panel"));
+      loginControls.forEach((control) => { control.disabled = true; });
+      try {
+        // Only the Firebase auth observer advances the dialog after a real sign-in.
+        if (provider === "google") await api.signInWithGoogle();
+        else await api.signInWithEmail($("#booking-email").value.trim(), $("#booking-password").value);
+        $("#booking-password").value = "";
+      } catch (err) {
+        if (detailsDialog.open && !currentUser) showDialogError(api.formatFirebaseError(err));
+      } finally {
+        loginPending = false;
+        status.hidden = true;
+        loginControls.forEach((control) => { control.disabled = false; });
+      }
     }
+    bookingGoogleBtn.addEventListener("click", () => signInForBooking("google"));
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      signInForBooking("email");
+    });
 
     const prevButton = $("#booking-prev");
     if (prevButton) {
@@ -1080,6 +1183,11 @@
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (submittingBooking) return;
+      if (currentStep !== 4) {
+        goToStep(currentStep + 1);
+        return;
+      }
       if (!selected.size) {
         $("#booking-error").hidden = false;
         $("#booking-error").textContent = "Escolha pelo menos um serviço para continuar.";
@@ -1093,9 +1201,8 @@
         return;
       }
       const phoneInput = $("#client-phone");
-      if (phoneInput && !isValidPhone(phoneInput.value)) {
-        phoneInput.setCustomValidity("Informe um WhatsApp com DDD (10 ou 11 dígitos).");
-        phoneInput.reportValidity();
+      if (!contactIsConfirmed() || !$("#client-name").value.trim() || !isValidPhone(phoneInput.value)) {
+        openDetailsDialog();
         return;
       }
 
@@ -1105,25 +1212,14 @@
         return;
       }
 
-      if (fb() && !currentUser) {
-        $("#booking-error").hidden = false;
-        $("#booking-error").textContent = "Entre com sua conta Google ou e-mail para confirmar o agendamento e salvar no seu histórico.";
-        $("#booking-auth-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        return;
-      }
-
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
       const chosen = chosenServices();
       let totalPrice = chosen.reduce((sum, service) => sum + service.price, 0);
       const totalDuration = chosen.reduce((sum, service) => sum + service.duration, 0);
       let assignedBarber = barber;
-      const submitBtn = $(".submit-booking", form);
-
       if (fb() && currentUser) {
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Confirmando...";
-        }
+        submittingBooking = true;
+        updateSummary();
         try {
           const result = await fb().createBooking({
             user: currentUser,
@@ -1144,13 +1240,10 @@
           const codeEl = $("#success-code");
           if (codeEl) codeEl.textContent = "Código da reserva: " + result.code + ". Acompanhe em Minha Conta.";
         } catch (err) {
-          $("#booking-error").hidden = false;
-          $("#booking-error").textContent = fb().formatFirebaseError(err);
+          showBookingAlert(fb().formatFirebaseError(err));
           await refreshAvailability();
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Confirmar agendamento →";
-          }
+          submittingBooking = false;
+          updateSummary();
           return;
         }
       }
@@ -1214,9 +1307,20 @@
     if (!api) return;
     api.onAuthChange(async (user) => {
       currentUser = user;
+      currentProfile = null;
       updateAccountLinks(user);
-      currentProfile = user ? await api.getUserProfile(user.uid) : null;
       refreshAuthUIInBooking();
+      window.dispatchEvent(new CustomEvent("castellari:auth-updated"));
+      if (user) {
+        try {
+          const profile = await api.getUserProfile(user.uid);
+          if (currentUser?.uid !== user.uid) return;
+          currentProfile = profile;
+          refreshAuthUIInBooking();
+        } catch (_) {
+          // Contact details remain editable when the profile cannot be loaded.
+        }
+      }
     });
 
     const remote = await api.loadCatalogFromFirestore();

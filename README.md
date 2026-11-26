@@ -34,6 +34,20 @@ O SDK do navegador precisa de um projeto Firebase configurado em `firebase-confi
 
 As regras limitam cada cliente às próprias reservas e promoções elegíveis; os documentos públicos de disponibilidade não devem conter identificadores de clientes. O Firebase Web API key é configuração pública do cliente: o controle de acesso depende das regras do Firestore.
 
+## Testes do fluxo de agendamento
+
+Os testes de interface usam Chrome e Playwright com Firebase simulado, dados fictícios e servidor local. Nenhuma reserva é enviada ao Firebase. Cobrem login, contato, confirmação explícita, erros e proteção contra cliques repetidos em telas de celular e desktop.
+
+No PowerShell, com Node.js e Chrome instalados:
+
+```powershell
+npm install --prefix "$env:TEMP\castellari-ui-check" --no-audit --no-fund playwright
+$env:NODE_PATH = Join-Path $env:TEMP 'castellari-ui-check\node_modules'
+node --test tests/booking-flow.cjs
+```
+
+Para usar Edge, defina `$env:BROWSER_CHANNEL = 'msedge'` antes de executar. As capturas de tela são salvas na pasta temporária do sistema.
+
 ## Dados a confirmar
 
 Preços, benefícios, vagas, profissionais, telefone, endereço, horários e redes sociais devem ser confirmados pela barbearia antes do uso oficial.

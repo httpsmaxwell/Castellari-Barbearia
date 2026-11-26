@@ -17,10 +17,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme-preference')==='light'){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#f4f0e7';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=8">
+  <link rel="stylesheet" href="castellari.css?v=9">
   <script src="castellari-data.js?v=7" defer></script>
   <script type="module" src="castellari-firebase.js?v=9"></script>
-  <script src="castellari.js?v=9" defer></script>
+  <script src="castellari.js?v=10" defer></script>
 </head>
 <body data-page="booking">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -145,23 +145,15 @@
           <div class="recap-item recap-total"><span>Total estimado</span><strong id="recap-total">R$ 0,00</strong></div>
         </div>
 
-        <p class="muted-text" id="booking-signed-user" hidden></p>
-        <div class="booking-duplication-alert" id="booking-auth-box">
-          <span>Entre com sua conta para confirmar a reserva e acompanhar seu histórico.</span>
-          <div class="record-actions">
-            <button type="button" class="button button-small google-login-button" id="booking-google-login"><svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11c-.5 2.7-2 5-4.3 6.6v5.5h7c4-3.7 6.3-9.2 6.3-16.1z"/><path fill="#34A853" d="M24 44c5.4 0 10-1.8 13.4-4.8l-7-5.5c-1.8 1.2-4 1.9-6.4 1.9-4.9 0-9-3.3-10.5-7.7h-7.2v5.7C9.7 39.8 16.3 44 24 44z"/><path fill="#FBBC05" d="M13.5 27.9c-.4-1.2-.7-2.5-.7-3.9s.2-2.7.7-3.9v-5.7H6.3C4.8 17.4 4 20.6 4 24s.8 6.6 2.3 9.6l7.2-5.7z"/><path fill="#EA4335" d="M24 12.4c2.9 0 5.5 1 7.5 2.9l6.2-6.2C34 5.8 29.4 4 24 4 16.3 4 9.7 8.2 6.3 14.4l7.2 5.7c1.5-4.4 5.6-7.7 10.5-7.7z"/></svg><span>Entrar com Google</span></button>
-            <a class="button button-small button-outline" href="conta.html">E-mail / Criar conta</a>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="field"><label for="client-name">Nome</label><input id="client-name" name="name" type="text" autocomplete="name" placeholder="Seu nome" required></div>
-          <div class="field"><label for="client-phone">WhatsApp</label><input id="client-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(92) 99999-9999" required></div>
+        <p class="muted-text" id="booking-review-hint">Confira os detalhes e toque em Próximo para continuar.</p>
+        <div class="booking-contact-recap" id="booking-contact-recap" hidden>
+          <div><span class="field-label">Seus dados</span><strong id="recap-client-name"></strong><span id="recap-client-phone"></span></div>
+          <button type="button" class="button button-small button-outline" id="booking-edit-contact">Editar dados</button>
         </div>
 
         <div class="step-nav-row">
           <button type="button" class="button button-outline" data-step-back="3">← Voltar</button>
-          <button class="button submit-booking" type="submit">Confirmar agendamento →</button>
+          <button class="button submit-booking" id="booking-review-next" type="submit">Próximo →</button>
         </div>
       </section>
       <p id="booking-error" class="booking-error" role="alert" hidden></p>
@@ -172,6 +164,31 @@
     <button class="button button-outline" id="booking-prev" type="button">← Voltar</button>
     <button class="button" id="booking-continue" type="button">Próximo →</button>
   </div>
+  <dialog class="booking-dialog" id="booking-details-dialog" aria-labelledby="booking-dialog-title" aria-describedby="booking-dialog-description">
+    <div class="booking-dialog-header">
+      <span class="eyebrow" id="booking-dialog-step">1 de 2 · Acesso</span>
+      <button type="button" class="booking-dialog-close" id="booking-dialog-close" aria-label="Fechar e voltar ao resumo">×</button>
+    </div>
+    <h2 id="booking-dialog-title" tabindex="-1">Entre na sua conta</h2>
+    <p class="muted-text" id="booking-dialog-description">Seu horário continua selecionado. Entre para seguir com o agendamento.</p>
+    <div id="booking-login-panel">
+      <button type="button" class="button button-outline google-login-button" id="booking-google-login"><svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11c-.5 2.7-2 5-4.3 6.6v5.5h7c4-3.7 6.3-9.2 6.3-16.1z"/><path fill="#34A853" d="M24 44c5.4 0 10-1.8 13.4-4.8l-7-5.5c-1.8 1.2-4 1.9-6.4 1.9-4.9 0-9-3.3-10.5-7.7h-7.2v5.7C9.7 39.8 16.3 44 24 44z"/><path fill="#FBBC05" d="M13.5 27.9c-.4-1.2-.7-2.5-.7-3.9s.2-2.7.7-3.9v-5.7H6.3C4.8 17.4 4 20.6 4 24s.8 6.6 2.3 9.6l7.2-5.7z"/><path fill="#EA4335" d="M24 12.4c2.9 0 5.5 1 7.5 2.9l6.2-6.2C34 5.8 29.4 4 24 4 16.3 4 9.7 8.2 6.3 14.4l7.2 5.7c1.5-4.4 5.6-7.7 10.5-7.7z"/></svg><span>Entrar com Google</span></button>
+      <div class="booking-login-divider"><span>ou use seu e-mail</span></div>
+      <form id="booking-login-form">
+        <div class="field"><label for="booking-email">E-mail</label><input id="booking-email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="none" required></div>
+        <div class="field"><label for="booking-password">Senha</label><input id="booking-password" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="button" type="submit">Entrar com e-mail</button>
+      </form>
+    </div>
+    <form id="booking-contact-form" hidden>
+      <p class="muted-text" id="booking-signed-user" hidden></p>
+      <div class="field"><label for="client-name">Nome</label><input id="client-name" name="name" type="text" autocomplete="name" placeholder="Seu nome" maxlength="120" required></div>
+      <div class="field"><label for="client-phone">WhatsApp</label><input id="client-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(92) 99999-9999" required></div>
+      <button class="button" type="submit">Revisar agendamento →</button>
+    </form>
+    <p class="booking-dialog-status" id="booking-dialog-status" role="status" hidden></p>
+    <p class="booking-error" id="booking-dialog-error" role="alert" tabindex="-1" hidden></p>
+  </dialog>
   <div class="booking-toast" id="booking-toast" role="alert" hidden></div>
   <section class="booking-success" id="booking-success" hidden><span class="eyebrow">Agendamento registrado</span><h2>Obrigado, <span id="success-name"></span>.</h2><p id="success-code">Sua solicitação foi registrada com sucesso.</p><div class="summary-line"><span>Serviços</span><strong id="success-services"></strong></div><div class="summary-line"><span>Profissional</span><strong id="success-professional"></strong></div><div class="summary-line"><span>Data e horário</span><strong id="success-date"></strong></div><div class="summary-total"><span>Valor estimado</span><strong id="success-total"></strong></div><div class="record-actions"><a class="button button-small" id="success-whatsapp-btn" href="#" target="_blank" rel="noopener">Abrir no WhatsApp</a><a class="button button-small button-outline" href="conta.html">Ver em Minha Conta</a><a class="button button-small button-outline" href="servicos.html">Voltar ao catálogo</a></div></section>
   <section class="booking-block plan-interest" id="plan-interest" hidden><span class="eyebrow">Clube Castellari</span><h2 id="plan-interest-heading">Consultar um plano</h2><p id="plan-interest-details"></p><div class="booking-duplication-alert" id="plan-auth-box"><span>Entre com sua conta para registrar a solicitação do plano.</span><div class="record-actions"><button type="button" class="button button-small google-login-button" id="plan-google-login"><svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11c-.5 2.7-2 5-4.3 6.6v5.5h7c4-3.7 6.3-9.2 6.3-16.1z"/><path fill="#34A853" d="M24 44c5.4 0 10-1.8 13.4-4.8l-7-5.5c-1.8 1.2-4 1.9-6.4 1.9-4.9 0-9-3.3-10.5-7.7h-7.2v5.7C9.7 39.8 16.3 44 24 44z"/><path fill="#FBBC05" d="M13.5 27.9c-.4-1.2-.7-2.5-.7-3.9s.2-2.7.7-3.9v-5.7H6.3C4.8 17.4 4 20.6 4 24s.8 6.6 2.3 9.6l7.2-5.7z"/><path fill="#EA4335" d="M24 12.4c2.9 0 5.5 1 7.5 2.9l6.2-6.2C34 5.8 29.4 4 24 4 16.3 4 9.7 8.2 6.3 14.4l7.2 5.7c1.5-4.4 5.6-7.7 10.5-7.7z"/></svg><span>Entrar com Google</span></button><a class="button button-small button-outline" href="conta.html">E-mail / Criar conta</a></div></div><div class="plan-interest-box"><strong id="plan-interest-name"></strong><span id="plan-interest-price"></span></div><form id="plan-interest-form" class="booking-form"><div class="form-grid"><div class="field"><label for="plan-client-name">Nome</label><input id="plan-client-name" type="text" autocomplete="name" required></div><div class="field"><label for="plan-client-phone">WhatsApp</label><input id="plan-client-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(92) 99999-9999" required></div></div><button class="button" type="submit">Enviar solicitação <span aria-hidden="true">→</span></button></form></section>
