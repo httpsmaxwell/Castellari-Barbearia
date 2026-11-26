@@ -263,10 +263,12 @@
     grid.innerHTML = chosen.map((plan) => {
       const soldOut = plan.slots === 0 || plan.badge === "Esgotado";
       const action = soldOut ? "Entrar na lista de espera" : "Consultar este plano";
+      const shortAction = soldOut ? "Lista de espera" : "Consultar";
       return '<article class="home-club-card"><span class="home-club-plan-label">Assinatura mensal</span><h3>' + escapeHTML(plan.name) + '</h3>' +
         '<p>' + escapeHTML(plan.days || "Consulte os dias de atendimento") + '</p>' +
         '<div class="home-club-card-footer"><div class="home-club-price"><small>Mensalidade</small>' + money(plan.price) + '<span> por mês</span></div>' +
-        '<a class="button button-small" href="agendar.html?plano=' + encodeURIComponent(plan.id) + '">' + action + ' <span aria-hidden="true">→</span></a></div></article>';
+        '<a class="button button-small" href="agendar.html?plano=' + encodeURIComponent(plan.id) + '" aria-label="' + escapeHTML(action + ': ' + plan.name) + '">' +
+        '<span class="home-club-action-full">' + action + '</span><span class="home-club-action-short">' + shortAction + '</span><span aria-hidden="true">→</span></a></div></article>';
     }).join("") || '<p class="empty-state">Nenhum plano disponível no momento. Fale com a barbearia para consultar opções.</p>';
     const more = $("#home-club-more");
     more.hidden = PLANS.length === 0;
