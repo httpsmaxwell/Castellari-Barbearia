@@ -14,7 +14,7 @@ import {
   seedCatalogFromLocal,
   updateAppointmentStatus,
   updatePlanRequestStatus,
-} from "./castellari-firebase.js?v=7";
+} from "./castellari-firebase.js?v=8";
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];

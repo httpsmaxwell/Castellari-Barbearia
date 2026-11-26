@@ -207,10 +207,19 @@ export async function createBooking({
   }
 
   const serviceSnapshots = await Promise.all(serviceIds.map((id) => getDoc(doc(db, "services", id))));
-  if (serviceSnapshots.some((snap) => !snap.exists() || snap.data().active === false)) {
-    throw new Error("Um dos serviços não está mais disponível.");
-  }
-  const services = serviceSnapshots.map((snap) => snap.data());
+  const localServices = window.CastellariData?.SERVICES || [];
+  const services = serviceSnapshots.map((snap, index) => {
+    if (snap.exists()) {
+      const service = snap.data();
+      if (service.active === false) throw new Error("Um dos serviços não está mais disponível.");
+      return service;
+    }
+
+    // The site can use its bundled catalog until the Firestore catalog is imported.
+    const fallback = localServices.find((service) => service.id === serviceIds[index]);
+    if (!fallback) throw new Error("Um dos serviços não está mais disponível.");
+    return fallback;
+  });
   const totalPrice = services.reduce((sum, service) => sum + Number(service.price), 0);
   const totalDuration = services.reduce((sum, service) => sum + Number(service.duration), 0);
   if (!Number.isFinite(totalPrice) || totalPrice < 0 || !Number.isInteger(totalDuration) || totalDuration < 1 || totalDuration > 480) {
