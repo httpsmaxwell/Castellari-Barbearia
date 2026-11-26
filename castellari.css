@@ -1675,6 +1675,25 @@ body.booking-dialog-open {
   background: var(--line);
 }
 
+.booking-auth-switch {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.booking-text-button {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .booking-dialog-status {
   margin-bottom: 0;
   color: var(--muted);
@@ -2120,6 +2139,23 @@ body.booking-dialog-open {
     align-items: center;
     gap: 10px;
     margin-top: 16px;
+  }
+
+  body.booking-service-step .booking-sticky-bar {
+    position: fixed;
+    z-index: 45;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, .28);
+  }
+
+  body.booking-service-step main {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
 
   .booking-sticky-bar .button {

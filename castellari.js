@@ -602,8 +602,10 @@
     let contactConfirmedUid = null;
     let submittingBooking = false;
     let loginPending = false;
+    let registering = false;
     const detailsDialog = $("#booking-details-dialog");
     const loginForm = $("#booking-login-form");
+    const registerForm = $("#booking-register-form");
     const contactForm = $("#booking-contact-form");
 
     function contactIsConfirmed() {
@@ -631,10 +633,27 @@
       if (detailsDialog.open) $("#booking-dialog-title").focus();
     }
 
+    function setRegisterMode(enabled) {
+      if (loginPending) return;
+      registering = enabled;
+      loginForm.hidden = enabled;
+      registerForm.hidden = !enabled;
+      $("#booking-create-prompt").hidden = enabled;
+      $("#booking-login-prompt").hidden = !enabled;
+      $("#booking-login-divider").hidden = enabled;
+      $("#booking-dialog-title").textContent = enabled ? "Crie sua conta" : "Entre na sua conta";
+      $("#booking-dialog-description").textContent = enabled
+        ? "Seu horário continua selecionado. Depois, informe seu nome e WhatsApp."
+        : "Seu horário continua selecionado. Entre para seguir com o agendamento.";
+      $("#booking-dialog-error").hidden = true;
+      $("#booking-dialog-title").focus();
+    }
+
     function openDetailsDialog() {
       if (submittingBooking) return;
       clearBookingAlert();
       renderDetailsDialog();
+      if (!currentUser && registering) setRegisterMode(false);
       if (!detailsDialog.open) detailsDialog.showModal();
       document.body.classList.add("booking-dialog-open");
       // Focus the heading so opening the dialog does not summon the mobile keyboard.
@@ -645,8 +664,12 @@
     detailsDialog.addEventListener("close", () => {
       document.body.classList.remove("booking-dialog-open");
       $("#booking-password").value = "";
+      $("#booking-register-password").value = "";
+      $("#booking-register-confirm").value = "";
     });
     $("#booking-edit-contact").addEventListener("click", openDetailsDialog);
+    $("#booking-show-register").addEventListener("click", () => setRegisterMode(true));
+    $("#booking-show-login").addEventListener("click", () => setRegisterMode(false));
 
     contactForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -729,6 +752,7 @@
         const step = Number(block.dataset.bookingStep);
         block.hidden = step !== currentStep;
       });
+      document.body.classList.toggle("booking-service-step", currentStep === 1);
 
       $$("[data-step-indicator]").forEach((item) => {
         const number = Number(item.dataset.stepIndicator);
@@ -1080,8 +1104,6 @@
       clearBookingAlert();
       persistBooking();
       updateSummary();
-      // Auto-avanço para o passo 4 (revisão e confirmação)
-      setTimeout(() => goToStep(4), 180);
     });
 
     barberSelect.addEventListener("change", () => {
@@ -1120,8 +1142,16 @@
       try {
         // Only the Firebase auth observer advances the dialog after a real sign-in.
         if (provider === "google") await api.signInWithGoogle();
+        else if (provider === "register") await api.registerWithEmail({
+          name: "",
+          phone: "",
+          email: $("#booking-register-email").value.trim(),
+          password: $("#booking-register-password").value,
+        });
         else await api.signInWithEmail($("#booking-email").value.trim(), $("#booking-password").value);
         $("#booking-password").value = "";
+        $("#booking-register-password").value = "";
+        $("#booking-register-confirm").value = "";
       } catch (err) {
         if (detailsDialog.open && !currentUser) showDialogError(api.formatFirebaseError(err));
       } finally {
@@ -1135,6 +1165,14 @@
       event.preventDefault();
       signInForBooking("email");
     });
+    registerForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const confirm = $("#booking-register-confirm");
+      confirm.setCustomValidity(confirm.value === $("#booking-register-password").value ? "" : "As senhas não coincidem.");
+      if (!registerForm.reportValidity()) return;
+      signInForBooking("register");
+    });
+    $("#booking-register-confirm").addEventListener("input", (event) => event.target.setCustomValidity(""));
 
     const prevButton = $("#booking-prev");
     if (prevButton) {

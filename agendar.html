@@ -17,10 +17,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme-preference')==='light'){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#f4f0e7';}}catch(e){}</script>
-  <link rel="stylesheet" href="castellari.css?v=9">
+  <link rel="stylesheet" href="castellari.css?v=10">
   <script src="castellari-data.js?v=7" defer></script>
   <script type="module" src="castellari-firebase.js?v=9"></script>
-  <script src="castellari.js?v=10" defer></script>
+  <script src="castellari.js?v=11" defer></script>
 </head>
 <body data-page="booking">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -173,12 +173,20 @@
     <p class="muted-text" id="booking-dialog-description">Seu horário continua selecionado. Entre para seguir com o agendamento.</p>
     <div id="booking-login-panel">
       <button type="button" class="button button-outline google-login-button" id="booking-google-login"><svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11c-.5 2.7-2 5-4.3 6.6v5.5h7c4-3.7 6.3-9.2 6.3-16.1z"/><path fill="#34A853" d="M24 44c5.4 0 10-1.8 13.4-4.8l-7-5.5c-1.8 1.2-4 1.9-6.4 1.9-4.9 0-9-3.3-10.5-7.7h-7.2v5.7C9.7 39.8 16.3 44 24 44z"/><path fill="#FBBC05" d="M13.5 27.9c-.4-1.2-.7-2.5-.7-3.9s.2-2.7.7-3.9v-5.7H6.3C4.8 17.4 4 20.6 4 24s.8 6.6 2.3 9.6l7.2-5.7z"/><path fill="#EA4335" d="M24 12.4c2.9 0 5.5 1 7.5 2.9l6.2-6.2C34 5.8 29.4 4 24 4 16.3 4 9.7 8.2 6.3 14.4l7.2 5.7c1.5-4.4 5.6-7.7 10.5-7.7z"/></svg><span>Entrar com Google</span></button>
-      <div class="booking-login-divider"><span>ou use seu e-mail</span></div>
+      <div class="booking-login-divider" id="booking-login-divider"><span>ou use seu e-mail</span></div>
       <form id="booking-login-form">
         <div class="field"><label for="booking-email">E-mail</label><input id="booking-email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="none" required></div>
         <div class="field"><label for="booking-password">Senha</label><input id="booking-password" name="password" type="password" autocomplete="current-password" required></div>
         <button class="button" type="submit">Entrar com e-mail</button>
       </form>
+      <div class="booking-auth-switch" id="booking-create-prompt">Ainda não tem conta? <button type="button" class="booking-text-button" id="booking-show-register">Criar conta</button></div>
+      <form id="booking-register-form" hidden>
+        <div class="field"><label for="booking-register-email">E-mail</label><input id="booking-register-email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="none" required></div>
+        <div class="field"><label for="booking-register-password">Crie uma senha</label><input id="booking-register-password" name="password" type="password" autocomplete="new-password" minlength="6" required></div>
+        <div class="field"><label for="booking-register-confirm">Confirme a senha</label><input id="booking-register-confirm" name="confirm-password" type="password" autocomplete="new-password" minlength="6" required></div>
+        <button class="button" type="submit">Criar conta e continuar</button>
+      </form>
+      <div class="booking-auth-switch" id="booking-login-prompt" hidden>Já tem conta? <button type="button" class="booking-text-button" id="booking-show-login">Entrar com e-mail</button></div>
     </div>
     <form id="booking-contact-form" hidden>
       <p class="muted-text" id="booking-signed-user" hidden></p>

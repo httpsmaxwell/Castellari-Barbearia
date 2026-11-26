@@ -48,6 +48,10 @@ const firebaseFixture = `
     getBookedTimesForDay: async () => [],
     signInWithEmail: signIn,
     signInWithGoogle: signIn,
+    registerWithEmail: async ({ email, password }) => {
+      fixture.registered = { email, password };
+      return signIn();
+    },
     formatFirebaseError: error => error.message,
     createBooking: async (payload) => {
       fixture.bookings.push(payload);
@@ -81,6 +85,7 @@ async function openBooking(options = {}) {
   await page.locator('[data-barber-choice="felipe"]').click();
   await page.locator('[data-day]').first().click();
   await page.locator('[data-time]:not([disabled])').first().click();
+  await page.locator(options.desktop ? '#btn-step-3-next' : '#booking-continue').click();
   await page.locator('[data-booking-step="4"]').waitFor({ state: 'visible' });
   const next = page.locator(options.desktop ? '#booking-review-next' : '#booking-continue');
   return { context, page, errors, next };
@@ -177,5 +182,58 @@ test('mobile: Google login, small viewport, and failed booking keep the selectio
     assert.equal(await page.locator('#booking-success').isVisible(), false);
     assert.equal(await page.locator('#recap-services').innerText(), 'Corte');
     assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('mobile: create an email account inside the dialog without losing the selected appointment', async () => {
+  const { context, page, next, errors } = await openBooking();
+  try {
+    const recap = await page.locator('.booking-recap-box').innerText();
+    await next.click();
+    await page.getByRole('button', { name: 'Criar conta', exact: true }).click();
+    assert.equal(await page.locator('#booking-register-form').isVisible(), true);
+    await page.locator('#booking-register-email').fill('novo@example.test');
+    await page.locator('#booking-register-password').fill('password123');
+    await page.locator('#booking-register-confirm').fill('mismatch');
+    await page.getByRole('button', { name: 'Criar conta e continuar' }).click();
+    assert.equal(await page.evaluate(() => window.bookingTest.registered || null), null);
+    await page.locator('#booking-register-confirm').fill('password123');
+    await page.getByRole('button', { name: 'Criar conta e continuar' }).click();
+    await page.locator('#booking-contact-form').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#booking-register-form').isVisible(), false);
+    await page.locator('#client-phone').fill('92999990000');
+    await page.getByRole('button', { name: 'Revisar agendamento' }).click();
+    assert.equal(await page.locator('.booking-recap-box').innerText(), recap);
+    assert.equal(await page.evaluate(() => window.bookingTest.bookings.length), 0);
+    assert.equal(await next.innerText(), 'Confirmar →');
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('mobile: service controls follow scrolling; selecting a time waits for Próximo', async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 640 } });
+  try {
+    await context.addInitScript(() => { window.bookingTest = { bookings: [] }; });
+    await context.route('**/*', route => {
+      const url = new URL(route.request().url());
+      if (url.origin !== origin) return route.abort();
+      if (url.pathname === '/castellari-firebase.js') return route.fulfill({ contentType: 'text/javascript', body: firebaseFixture });
+      return route.continue();
+    });
+    const page = await context.newPage();
+    await page.goto(origin + '/agendar.html');
+    await page.locator('[data-service-tab="all"]').click();
+    await page.evaluate(() => scrollTo(0, document.body.scrollHeight / 2));
+    const bar = await page.locator('#booking-sticky-bar').boundingBox();
+    assert.equal(await page.locator('#booking-sticky-bar').evaluate(el => getComputedStyle(el).position), 'fixed');
+    assert.ok(bar.y + bar.height <= 641);
+    await page.locator('input[value="corte-tradicional"]').check();
+    await page.locator('#booking-continue').click();
+    await page.locator('[data-barber-choice="felipe"]').click();
+    await page.locator('[data-day]').first().click();
+    await page.locator('[data-time]:not([disabled])').first().click();
+    assert.equal(await page.locator('[data-booking-step="3"]').isVisible(), true);
+    await page.locator('#booking-continue').click();
+    assert.equal(await page.locator('[data-booking-step="4"]').isVisible(), true);
   } finally { await context.close(); }
 });
