@@ -181,14 +181,32 @@ export function makeSlotId(dateIso, barberId, time) {
   return `${dateIso}__${barberId}__${time.replace(":", "-")}`;
 }
 
-export async function getBookedTimesForDay(dateIso, barberId) {
-  if (!dateIso || !barberId) return [];
-  const constraints = [where("dateIso", "==", dateIso)];
-  if (barberId !== "sem-preferencia") constraints.push(where("barberId", "==", barberId));
-  const q = query(collection(db, "availability"), ...constraints);
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ barberId: d.data().barberId, time: d.data().time }))
-    .filter((slot) => slot.barberId && slot.time);
+export async function getBookedTimesForDay(dateIso, barberIds, slotTimes) {
+  if (!dateIso || !Array.isArray(barberIds) || !Array.isArray(slotTimes)) return [];
+
+  const uniqueBarbers = [...new Set(barberIds.filter(Boolean))];
+  const uniqueTimes = [...new Set(slotTimes.filter((time) => /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(time)))];
+  if (!uniqueBarbers.length) throw new Error("Selecione um profissional para consultar a agenda.");
+  const slots = uniqueBarbers.flatMap((barberId) => uniqueTimes.map((time) => ({ barberId, time })));
+  if (!slots.length) return [];
+
+  let deniedReads = 0;
+  const results = await Promise.all(slots.map(async ({ barberId, time }) => {
+    try {
+      const snapshot = await getDoc(doc(db, "availability", makeSlotId(dateIso, barberId, time)));
+      return snapshot.exists() ? { barberId, time } : null;
+    } catch (error) {
+      if (error?.code !== "permission-denied") throw error;
+      // A locked or legacy slot that cannot be inspected must stay unavailable.
+      deniedReads += 1;
+      return { barberId, time };
+    }
+  }));
+
+  if (deniedReads === slots.length) {
+    throw new Error("As regras do Firestore não permitiram consultar os horários.");
+  }
+  return results.filter(Boolean);
 }
 
 export async function createBooking({

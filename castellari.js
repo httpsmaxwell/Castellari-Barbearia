@@ -752,6 +752,7 @@
     const timeRoot = $("#booking-times");
     let bookedSlots = [];
     let availabilityReady = false;
+    let availabilityError = false;
     let availabilityRequest = 0;
 
     function isTimeUnavailable(time, duration) {
@@ -783,9 +784,19 @@
         timeRoot.setAttribute("aria-busy", "false");
         return;
       }
-      if (!fb() || !availabilityReady) {
-        timeRoot.innerHTML = '<p class="empty-state">Os horários serão exibidos quando a agenda puder ser consultada.</p>';
-        timeRoot.setAttribute("aria-busy", String(Boolean(fb())));
+      if (!fb()) {
+        timeRoot.innerHTML = '<p class="empty-state">A agenda está temporariamente indisponível. Atualize a página ou fale com a barbearia.</p>';
+        timeRoot.setAttribute("aria-busy", "false");
+        return;
+      }
+      if (availabilityError) {
+        timeRoot.innerHTML = '<p class="empty-state" role="status">Não foi possível consultar os horários agora.</p><button type="button" class="button button-small button-outline" data-retry-availability>Tentar novamente</button>';
+        timeRoot.setAttribute("aria-busy", "false");
+        return;
+      }
+      if (!availabilityReady) {
+        timeRoot.innerHTML = '<p class="empty-state">Consultando horários disponíveis…</p>';
+        timeRoot.setAttribute("aria-busy", "true");
         return;
       }
       timeRoot.innerHTML = times.map((time) => {
@@ -802,15 +813,29 @@
       if (!selectedDay || !fb()) {
         bookedSlots = [];
         availabilityReady = false;
+        availabilityError = false;
         renderTimeButtons();
         return;
       }
       availabilityReady = false;
+      availabilityError = false;
       renderTimeButtons();
       try {
         const dateIso = selectedDay.iso;
         const barberId = barberSelect.value;
-        const result = await fb().getBookedTimesForDay(dateIso, barberId);
+        const barberIds = barberId === "sem-preferencia"
+          ? BARBERS.filter((person) => person.id !== "sem-preferencia" && person.active !== false).map((person) => person.id)
+          : [barberId];
+        const interval = [15, 30, 60].includes(Number(SHOP_SETTINGS.slotIntervalMinutes))
+          ? Number(SHOP_SETTINGS.slotIntervalMinutes)
+          : 60;
+        const opening = clockMinutes(SHOP_SETTINGS.openingTime, 540);
+        const closing = clockMinutes(SHOP_SETTINGS.closingTime, 1200);
+        const slotTimes = [];
+        for (let minute = opening; minute < closing; minute += interval) {
+          slotTimes.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
+        }
+        const result = await fb().getBookedTimesForDay(dateIso, barberIds, slotTimes);
         if (requestId !== availabilityRequest) return;
         const priorSelectedTime = selectedTime;
         bookedSlots = result;
@@ -827,9 +852,17 @@
       } catch (_) {
         if (requestId !== availabilityRequest) return;
         availabilityReady = false;
+        availabilityError = true;
+        selectedTime = null;
+        persistBooking();
+        updateSummary();
         renderTimeButtons();
       }
     }
+
+    timeRoot.addEventListener("click", (event) => {
+      if (event.target.closest("[data-retry-availability]")) refreshAvailability();
+    });
 
     window.addEventListener("castellari:schedule-updated", () => {
       const previousIso = selectedDay && selectedDay.iso;
