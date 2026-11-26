@@ -13,8 +13,8 @@ before(async () => {
   const allowed = new Set(['agendar.html', 'castellari.css', 'castellari.js', 'castellari-data.js']);
   server = createServer(async (req, res) => {
     const file = new URL(req.url, 'http://localhost').pathname.slice(1);
-    if (!allowed.has(file)) { res.writeHead(404).end(); return; }
-    const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+    if (!allowed.has(file) && !/^img\/equipe\/[a-z0-9-]+\.jpg$/.test(file)) { res.writeHead(404).end(); return; }
+    const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.jpg') ? 'image/jpeg' : 'text/html';
     try {
       res.writeHead(200, { 'Content-Type': type + '; charset=utf-8' });
       res.end(await readFile(path.join(__dirname, '..', file)));
@@ -87,6 +87,7 @@ async function openBooking(options = {}) {
   await page.locator('[data-quick-choice="corte-tradicional"]').click();
   await page.locator(options.desktop ? '#btn-step-1-next' : '#booking-continue').click();
   await page.locator('[data-barber-choice="felipe"]').click();
+  await page.locator(options.desktop ? '#btn-step-2-next' : '#booking-continue').click();
   await page.locator('[data-day]').first().click();
   await page.locator('[data-time]:not([disabled])').first().click();
   await page.locator(options.desktop ? '#btn-step-3-next' : '#booking-continue').click();
@@ -235,6 +236,8 @@ test('mobile: service controls follow scrolling; selecting a time waits for Pró
     await page.locator('input[value="corte-tradicional"]').check();
     await page.locator('#booking-continue').click();
     await page.locator('[data-barber-choice="felipe"]').click();
+    assert.equal(await page.locator('[data-booking-step="2"]').isVisible(), true);
+    await page.locator('#booking-continue').click();
     await page.locator('[data-day]').first().click();
     await page.locator('[data-time]:not([disabled])').first().click();
     assert.equal(await page.locator('[data-booking-step="3"]').isVisible(), true);
@@ -280,6 +283,44 @@ test('mobile: common choices are shown first; the full catalog remains searchabl
     assert.equal(await page.locator('#selected-service-count').innerText(), '3 serviços selecionados');
     await page.locator('#booking-continue').click();
     assert.equal(await page.locator('[data-booking-step="2"]').isVisible(), true);
+  } finally { await context.close(); }
+});
+
+test('mobile: choices fit above persistent navigation and the barber stays selected until Próximo', async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 700 }, reducedMotion: 'reduce' });
+  try {
+    await context.addInitScript(() => { window.bookingTest = { bookings: [] }; });
+    await context.route('**/*', route => {
+      const url = new URL(route.request().url());
+      if (url.origin !== origin) return route.abort();
+      if (url.pathname === '/castellari-firebase.js') return route.fulfill({ contentType: 'text/javascript', body: firebaseFixture });
+      return route.continue();
+    });
+    const page = await context.newPage();
+    await page.goto(origin + '/agendar.html');
+    const visibleAboveNavigation = async selector => page.evaluate(selector => {
+      const bottom = document.querySelector(selector).getBoundingClientRect().bottom;
+      const navigationTop = document.querySelector('#booking-sticky-bar').getBoundingClientRect().top;
+      return bottom <= navigationTop;
+    }, selector);
+    assert.equal(await visibleAboveNavigation('#booking-catalog-toggle'), true);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-compact-services.png') });
+    await page.locator('[data-quick-choice="corte-tradicional"]').click();
+    assert.equal(await visibleAboveNavigation('#booking-catalog-toggle'), true);
+    await page.locator('#booking-continue').click();
+    assert.equal(await page.locator('#booking-sticky-bar').evaluate(el => getComputedStyle(el).position), 'fixed');
+    assert.equal(await visibleAboveNavigation('[data-barber-choice="sem-preferencia"]'), true);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-compact-barbers.png') });
+    await page.locator('[data-barber-choice="felipe"]').click();
+    assert.equal(await page.locator('[data-booking-step="2"]').isVisible(), true);
+    assert.equal(await page.locator('[data-barber-choice="felipe"]').evaluate(el => el === document.activeElement), true);
+    await page.locator('#booking-continue').click();
+    await page.locator('[data-day]').first().click();
+    await page.locator('[data-time]:not([disabled])').first().click();
+    assert.equal(await page.locator('#booking-sticky-bar').evaluate(el => getComputedStyle(el).position), 'fixed');
+    assert.equal(await visibleAboveNavigation('#booking-times'), true);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-compact-times.png') });
+    assert.equal(await page.locator('[data-booking-step="3"]').isVisible(), true);
   } finally { await context.close(); }
 });
 

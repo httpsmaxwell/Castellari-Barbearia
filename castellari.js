@@ -524,6 +524,11 @@
         selectedChipsRoot.innerHTML = "";
         return;
       }
+      if (chosen.every((service) => quickChoices.some((choice) => choice.id === service.id))) {
+        selectedChipsRoot.hidden = true;
+        selectedChipsRoot.innerHTML = "";
+        return;
+      }
       selectedChipsRoot.hidden = false;
       selectedChipsRoot.innerHTML = chosen.map((s) =>
         '<button type="button" class="selected-chip" data-remove-service="' + escapeHTML(s.id) + '" aria-label="Remover ' + escapeHTML(s.name) + '">' +
@@ -829,7 +834,7 @@
         const step = Number(block.dataset.bookingStep);
         block.hidden = step !== currentStep;
       });
-      document.body.classList.toggle("booking-service-step", currentStep === 1);
+      document.body.classList.toggle("booking-selection-step", currentStep <= 3);
 
       $$("[data-step-indicator]").forEach((item) => {
         const number = Number(item.dataset.stepIndicator);
@@ -872,11 +877,10 @@
         btn.addEventListener("click", () => {
           barberSelect.value = btn.dataset.barberChoice;
           renderBarbersGrid();
+          $$("[data-barber-choice]", barbersGrid).find((item) => item.dataset.barberChoice === barberSelect.value)?.focus();
           persistBooking();
           updateSummary();
           refreshAvailability();
-          // Auto-avanço para o passo 3 (horário)
-          setTimeout(() => goToStep(3), 160);
         });
       });
     }

@@ -12,7 +12,7 @@ Site estático multipágina com autenticação e operações de agenda executada
 - `conta.html` — autenticação, histórico e promoções
 - `admin.html` — agenda, catálogo, promoções e configurações
 
-No agendamento, a escolha de serviços começa com Corte, Barba, Corte Infantil, Barboterapia, Limpeza de Sobrancelha e Terapia Capilar. Essas opções podem ser combinadas livremente. A opção “Ver todos os serviços” abre a busca e o catálogo completo. Os preços e durações são obtidos dos mesmos serviços do catálogo.
+No agendamento, a escolha de serviços começa com Corte, Barba, Corte Infantil, Barboterapia, Limpeza de Sobrancelha e Terapia Capilar. Essas opções podem ser combinadas livremente. A opção “Ver todos os serviços” abre a busca e o catálogo completo. Os preços e durações são obtidos dos mesmos serviços do catálogo. No celular, as três telas de escolha são compactas e os botões de navegação ficam visíveis durante a rolagem. A escolha do profissional ou do horário só avança após tocar em “Próximo”.
 
 ## Estrutura
 

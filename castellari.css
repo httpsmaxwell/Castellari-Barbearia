@@ -2273,7 +2273,7 @@ body.booking-dialog-open {
     margin-top: 16px;
   }
 
-  body.booking-service-step .booking-sticky-bar {
+  body.booking-selection-step .booking-sticky-bar {
     position: fixed;
     z-index: 45;
     right: 0;
@@ -2286,7 +2286,7 @@ body.booking-dialog-open {
     box-shadow: 0 -8px 25px rgba(0, 0, 0, .28);
   }
 
-  body.booking-service-step main {
+  body.booking-selection-step main {
     padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
 
@@ -2300,6 +2300,136 @@ body.booking-dialog-open {
   .booking-sticky-bar .button:disabled {
     opacity: .42;
     cursor: not-allowed;
+  }
+
+  body[data-page="booking"] .booking-form {
+    gap: 10px;
+  }
+
+  body[data-page="booking"] .booking-block {
+    padding: 16px;
+  }
+
+  body[data-page="booking"] .booking-block h2 {
+    margin-bottom: 6px;
+    font-size: 23px;
+  }
+
+  body[data-page="booking"] .booking-block > .booking-service-intro,
+  body[data-page="booking"] [data-booking-step="2"] > .muted-text {
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  body[data-page="booking"] .booking-stepper {
+    margin-bottom: 8px;
+  }
+
+  body[data-page="booking"] .booking-stepper li {
+    padding-block: 4px 7px;
+  }
+
+  body[data-page="booking"] .booking-quick-choices {
+    gap: 6px;
+  }
+
+  body[data-page="booking"] .booking-quick-choice {
+    grid-template-columns: 18px minmax(0, 1fr);
+    min-height: 78px;
+    padding: 8px;
+    gap: 2px 7px;
+  }
+
+  body[data-page="booking"] .booking-quick-check {
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+  }
+
+  body[data-page="booking"] .booking-quick-text strong,
+  body[data-page="booking"] .booking-quick-price {
+    font-size: 12px;
+  }
+
+  body[data-page="booking"] .booking-quick-text small {
+    font-size: 10px;
+  }
+
+  body[data-page="booking"] .booking-catalog-toggle {
+    min-height: 42px;
+    margin-top: 8px;
+  }
+
+  body[data-page="booking"] #selected-services-bar {
+    margin-top: 7px;
+  }
+
+  body[data-page="booking"] .selected-service-count {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  body[data-page="booking"] .barbers-selection-grid {
+    gap: 7px;
+    margin: 10px 0;
+  }
+
+  body[data-page="booking"] .barber-choice-card {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 68px;
+    padding: 8px;
+    gap: 8px;
+    text-align: left;
+  }
+
+  body[data-page="booking"] .barber-choice-card[data-barber-choice="sem-preferencia"] {
+    grid-column: 1 / -1;
+  }
+
+  body[data-page="booking"] .barber-card-avatar-wrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  body[data-page="booking"] .barber-card-info {
+    min-width: 0;
+  }
+
+  body[data-page="booking"] .barber-card-info strong {
+    font-size: 12px;
+  }
+
+  body[data-page="booking"] .barber-card-info span {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  body[data-page="booking"] .barber-card-badge {
+    display: none;
+  }
+
+  body[data-page="booking"] #booking-days,
+  body[data-page="booking"] #booking-times {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  body[data-page="booking"] #booking-days .choice-button {
+    min-height: 50px;
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  body[data-page="booking"] #booking-times .choice-button {
+    min-height: 44px;
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  body[data-page="booking"] .time-label {
+    margin: 14px 0 7px;
   }
 
   .site-footer {
