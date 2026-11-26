@@ -484,9 +484,12 @@
     const searchInput = $("#booking-service-search");
     let activeServiceTab = "all";
     const quickChoices = [
-      { label: "Corte", ids: ["corte-tradicional"] },
-      { label: "Barba", ids: ["barba-tradicional"] },
-      { label: "Corte + barba", ids: ["corte-tradicional", "barba-tradicional"] },
+      { label: "Corte", id: "corte-tradicional" },
+      { label: "Barba", id: "barba-tradicional" },
+      { label: "Corte Infantil", id: "corte-infantil" },
+      { label: "Barboterapia", id: "barboterapia" },
+      { label: "Limpeza de Sobrancelha", id: "sobrancelha-limpeza" },
+      { label: "Terapia Capilar", id: "terapia-capilar" },
     ];
 
     function showBookingAlert(msg) {
@@ -540,15 +543,12 @@
     }
 
     function renderQuickChoices() {
-      quickChoicesRoot.innerHTML = quickChoices.filter((choice) =>
-        choice.ids.every((id) => SERVICES.some((service) => service.id === id))
-      ).map((choice) => {
-        const services = choice.ids.map((id) => SERVICES.find((service) => service.id === id));
-        const active = selected.size === choice.ids.length && choice.ids.every((id) => selected.has(id));
-        const price = services.reduce((sum, service) => sum + Number(service.price || 0), 0);
-        const duration = services.reduce((sum, service) => sum + Number(service.duration || 0), 0);
-        return '<button type="button" class="booking-quick-choice' + (active ? ' is-selected' : '') + '" data-quick-choice="' + escapeHTML(choice.ids.join(',')) + '" aria-pressed="' + String(active) + '">' +
-          '<span class="booking-quick-check" aria-hidden="true">✓</span><span class="booking-quick-text"><strong>' + escapeHTML(choice.label) + '</strong><small>' + duration + ' min</small></span><span class="booking-quick-price">' + money(price) + '</span></button>';
+      quickChoicesRoot.innerHTML = quickChoices.map((choice) => {
+        const service = SERVICES.find((item) => item.id === choice.id);
+        if (!service) return "";
+        const active = selected.has(choice.id);
+        return '<button type="button" class="booking-quick-choice' + (active ? ' is-selected' : '') + '" data-quick-choice="' + escapeHTML(choice.id) + '" aria-pressed="' + String(active) + '">' +
+          '<span class="booking-quick-check" aria-hidden="true">✓</span><span class="booking-quick-text"><strong>' + escapeHTML(choice.label) + '</strong><small>' + Number(service.duration || 0) + ' min</small></span><span class="booking-quick-price">' + money(Number(service.price || 0)) + '</span></button>';
       }).join("");
       quickChoicesRoot.hidden = !quickChoicesRoot.children.length;
     }
@@ -594,15 +594,15 @@
     quickChoicesRoot.addEventListener("click", (event) => {
       const button = event.target.closest("[data-quick-choice]");
       if (!button) return;
-      const ids = button.dataset.quickChoice.split(",");
-      selected.clear();
-      ids.forEach((id) => selected.add(id));
+      const id = button.dataset.quickChoice;
+      if (selected.has(id)) selected.delete(id);
+      else selected.add(id);
       clearBookingAlert();
       updateSelectedCount();
       renderSelectedChips();
       renderServiceList();
       renderQuickChoices();
-      $$("[data-quick-choice]", quickChoicesRoot).find((item) => item.dataset.quickChoice === ids.join(","))?.focus();
+      $$("[data-quick-choice]", quickChoicesRoot).find((item) => item.dataset.quickChoice === id)?.focus();
       renderTimeButtons();
       persistBooking();
       updateSummary();

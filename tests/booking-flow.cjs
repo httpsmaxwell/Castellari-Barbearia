@@ -256,16 +256,25 @@ test('mobile: common choices are shown first; the full catalog remains searchabl
     const page = await context.newPage();
     await page.goto(origin + '/agendar.html');
     await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-service-choices-mobile.png') });
-    assert.deepEqual(await page.locator('.booking-quick-text strong').allTextContents(), ['Corte', 'Barba', 'Corte + barba']);
+    assert.deepEqual(await page.locator('.booking-quick-text strong').allTextContents(), [
+      'Corte', 'Barba', 'Corte Infantil', 'Barboterapia', 'Limpeza de Sobrancelha', 'Terapia Capilar',
+    ]);
     assert.equal(await page.locator('#booking-catalog-panel').isVisible(), false);
-    await page.locator('[data-quick-choice="corte-tradicional,barba-tradicional"]').click();
+    await page.locator('[data-quick-choice="corte-tradicional"]').click();
+    await page.locator('[data-quick-choice="barba-tradicional"]').click();
     assert.equal(await page.locator('#selected-service-count').innerText(), '2 serviços selecionados');
-    assert.equal(await page.locator('[data-quick-choice="corte-tradicional,barba-tradicional"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('[data-quick-choice="corte-tradicional"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('[data-quick-choice="barba-tradicional"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-quick-choice="corte-tradicional"]').click();
+    assert.equal(await page.locator('#selected-service-count').innerText(), '1 serviço selecionado');
+    assert.equal(await page.locator('[data-quick-choice="barba-tradicional"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-quick-choice="corte-tradicional"]').click();
     await page.locator('#booking-catalog-toggle').click();
-    await page.locator('#booking-service-search').fill('sobrancelha');
-    await page.locator('input[value="sobrancelha-limpeza"]').check();
+    await page.locator('#booking-service-search').fill('depilação');
+    await page.locator('input[value="depilacao-cera-avulsa"]').check();
     assert.equal(await page.locator('#selected-service-count').innerText(), '3 serviços selecionados');
-    assert.equal(await page.locator('[data-quick-choice="corte-tradicional,barba-tradicional"]').getAttribute('aria-pressed'), 'false');
+    assert.equal(await page.locator('[data-quick-choice="corte-tradicional"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('[data-quick-choice="barba-tradicional"]').getAttribute('aria-pressed'), 'true');
     await page.locator('#booking-catalog-toggle').click();
     assert.equal(await page.locator('#booking-catalog-panel').isVisible(), false);
     assert.equal(await page.locator('#selected-service-count').innerText(), '3 serviços selecionados');

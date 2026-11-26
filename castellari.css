@@ -1331,17 +1331,19 @@ a.service-card:focus-visible {
 
 .booking-quick-choices {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .booking-quick-choice {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  align-items: start;
+  gap: 8px 10px;
   width: 100%;
-  min-height: 70px;
-  padding: 14px 16px;
+  min-height: 116px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -1382,8 +1384,9 @@ a.service-card:focus-visible {
 }
 
 .booking-quick-text strong {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .booking-quick-text small {
@@ -1392,10 +1395,20 @@ a.service-card:focus-visible {
 }
 
 .booking-quick-price {
+  grid-column: 2;
+  align-self: end;
   color: var(--green);
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .booking-quick-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
 }
 
 .booking-catalog-toggle {
