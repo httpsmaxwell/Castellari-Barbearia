@@ -14,16 +14,17 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { auth, db, functions, googleProvider } from "./firebase-config.js?v=7";
-import { httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-functions.js";
+import { auth, db, googleProvider } from "./firebase-config.js?v=7";
 
 const AUTH_ERROR_MESSAGES = {
   "auth/email-already-in-use": "Este e-mail já está cadastrado. Tente entrar ou recuperar a senha.",
@@ -201,22 +202,132 @@ export async function createBooking({
   clientPhone,
 }) {
   if (!user) throw new Error("Faça login para confirmar o agendamento.");
-  const callable = httpsCallable(functions, "createBooking");
-  const result = await callable({
-    serviceIds,
-    barberId,
-    dateIso,
-    dateFull,
-    time,
-    clientName: clientName.trim(),
-    clientPhone: clientPhone.trim(),
+  if (!Array.isArray(serviceIds) || !serviceIds.length || new Set(serviceIds).size !== serviceIds.length) {
+    throw new Error("Selecione serviços válidos, sem repetição.");
+  }
+
+  const serviceSnapshots = await Promise.all(serviceIds.map((id) => getDoc(doc(db, "services", id))));
+  if (serviceSnapshots.some((snap) => !snap.exists() || snap.data().active === false)) {
+    throw new Error("Um dos serviços não está mais disponível.");
+  }
+  const services = serviceSnapshots.map((snap) => snap.data());
+  const totalPrice = services.reduce((sum, service) => sum + Number(service.price), 0);
+  const totalDuration = services.reduce((sum, service) => sum + Number(service.duration), 0);
+  if (!Number.isFinite(totalPrice) || totalPrice < 0 || !Number.isInteger(totalDuration) || totalDuration < 1 || totalDuration > 480) {
+    throw new Error("Os serviços selecionados têm dados inválidos.");
+  }
+
+  const settingsSnap = await getDoc(doc(db, "settings", "barbershop"));
+  const settings = settingsSnap.exists() ? settingsSnap.data() : {};
+  const interval = [15, 30, 60].includes(Number(settings.slotIntervalMinutes)) ? Number(settings.slotIntervalMinutes) : 60;
+  const [startHour, startMinute] = time.split(":").map(Number);
+  const start = startHour * 60 + startMinute;
+  const end = start + Math.ceil(totalDuration / interval) * interval;
+  const [openHour, openMinute] = String(settings.openingTime || "09:00").split(":").map(Number);
+  const [closeHour, closeMinute] = String(settings.closingTime || "20:00").split(":").map(Number);
+  const opening = openHour * 60 + openMinute;
+  const closing = closeHour * 60 + closeMinute;
+  const openDays = Array.isArray(settings.openDays) ? settings.openDays : [1, 2, 3, 4, 5, 6];
+  const bookingDate = new Date(`${dateIso}T12:00:00.000Z`);
+  const todayParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Manaus",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date()).map((part) => [part.type, part.value]));
+  const todayIso = `${todayParts.year}-${todayParts.month}-${todayParts.day}`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso) || Number.isNaN(bookingDate.getTime()) ||
+      bookingDate.toISOString().slice(0, 10) !== dateIso || dateIso <= todayIso ||
+      !openDays.includes(bookingDate.getUTCDay()) || start < opening || (start - opening) % interval !== 0 || end > closing) {
+    throw new Error("Data ou horário fora da agenda da barbearia.");
+  }
+
+  let barberCandidates = [];
+  if (barberId === "sem-preferencia") {
+    const barbersSnap = await getDocs(collection(db, "barbers"));
+    barberCandidates = barbersSnap.docs
+      .filter((snap) => snap.id !== "sem-preferencia" && snap.data().active !== false)
+      .sort((a, b) => (a.data().order || 999) - (b.data().order || 999))
+      .map((snap) => ({ id: snap.id, ...snap.data() }));
+  } else {
+    const barberSnap = await getDoc(doc(db, "barbers", barberId));
+    if (barberSnap.exists() && barberSnap.data().active !== false) {
+      barberCandidates = [{ id: barberSnap.id, ...barberSnap.data() }];
+    }
+  }
+  if (!barberCandidates.length) throw new Error("Não há profissional disponível para essa reserva.");
+
+  const blocks = [];
+  for (let minute = start; minute < end; minute += interval) {
+    blocks.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
+  }
+  const appointmentRef = doc(collection(db, "appointments"));
+  const code = `CST-${appointmentRef.id.slice(0, 5).toUpperCase()}`;
+  const result = await runTransaction(db, async (transaction) => {
+    let chosen = null;
+    for (const barber of barberCandidates) {
+      const refs = blocks.map((block) => doc(db, "availability", makeSlotId(dateIso, barber.id, block)));
+      const snapshots = [];
+      for (const ref of refs) snapshots.push(await transaction.get(ref));
+      if (snapshots.every((snap) => !snap.exists())) {
+        chosen = { barber, refs };
+        break;
+      }
+    }
+    if (!chosen) throw new Error("Este horário acabou de ser reservado. Escolha outro.");
+
+    const slotIds = chosen.refs.map((ref) => ref.id);
+    transaction.set(appointmentRef, {
+      code,
+      clientUid: user.uid,
+      clientEmail: user.email || "",
+      clientName: clientName.trim(),
+      clientPhone: clientPhone.trim(),
+      serviceIds,
+      serviceNames: services.map((service) => String(service.name || "Serviço")),
+      requestedBarberId: barberId,
+      barberId: chosen.barber.id,
+      barberName: String(chosen.barber.name || "Profissional"),
+      dateIso,
+      dateFull,
+      time,
+      totalPrice,
+      totalDuration,
+      status: "pending",
+      slotId: slotIds[0],
+      slotIds,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    chosen.refs.forEach((ref, index) => transaction.set(ref, {
+      dateIso,
+      barberId: chosen.barber.id,
+      time: blocks[index],
+      appointmentId: appointmentRef.id,
+      status: "booked",
+      createdAt: serverTimestamp(),
+    }));
+    return { id: appointmentRef.id, code, barberId: chosen.barber.id, barberName: chosen.barber.name, totalPrice, totalDuration };
   });
-  return result.data;
+
+  try {
+    await ensureUserProfile(user, { name: clientName.trim(), phone: clientPhone.trim() });
+  } catch (_) {}
+  return result;
 }
 
 export async function cancelClientAppointment(appointmentId, slotId) {
-  const callable = httpsCallable(functions, "cancelClientAppointment");
-  await callable({ appointmentId, slotId });
+  const appointmentRef = doc(db, "appointments", appointmentId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(appointmentRef);
+    if (!snap.exists()) throw new Error("Agendamento não encontrado.");
+    const appointment = snap.data();
+    const slotIds = Array.isArray(appointment.slotIds)
+      ? appointment.slotIds
+      : slotId ? [slotId] : appointment.slotId ? [appointment.slotId] : [];
+    transaction.update(appointmentRef, { status: "cancelled", updatedAt: serverTimestamp() });
+    slotIds.forEach((id) => transaction.delete(doc(db, "availability", id)));
+  });
 }
 
 export async function getUserAppointments(uid) {
@@ -231,13 +342,29 @@ export async function getUserAppointments(uid) {
 
 export async function createPlanRequest({ user, plan, clientName, clientPhone }) {
   if (!user) throw new Error("Faça login para registrar seu interesse no plano.");
-  const callable = httpsCallable(functions, "createPlanRequest");
-  const result = await callable({
-    planId: plan.id,
-    clientName: clientName.trim(),
-    clientPhone: clientPhone.trim(),
+  const planRef = doc(db, "plans", plan.id);
+  const requestRef = doc(collection(db, "planRequests"));
+  const planSnap = await getDoc(planRef);
+  if (!planSnap.exists() || planSnap.data().active === false) throw new Error("Este plano não está mais disponível.");
+  const canonicalPlan = planSnap.data();
+  await runTransaction(db, async (transaction) => {
+    transaction.set(requestRef, {
+      clientUid: user.uid,
+      clientEmail: user.email || "",
+      clientName: clientName.trim(),
+      clientPhone: clientPhone.trim(),
+      planId: plan.id,
+      planName: canonicalPlan.name,
+      planPrice: Number(canonicalPlan.price),
+      waitlist: Number(canonicalPlan.slots) <= 0 || canonicalPlan.badge === "Esgotado",
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
   });
-  return result.data;
+  try {
+    await ensureUserProfile(user, { name: clientName.trim(), phone: clientPhone.trim() });
+  } catch (_) {}
+  return requestRef.id;
 }
 
 export async function getUserPlanRequests(uid) {
@@ -273,12 +400,6 @@ export async function getEligiblePromotions(user, profile) {
   return [...unique.values()];
 }
 
-export async function migrateLegacyData() {
-  const callable = httpsCallable(functions, "migrateLegacyData");
-  const result = await callable({});
-  return result.data;
-}
-
 // ==========================================================================
 // Operações de Administração
 // ==========================================================================
@@ -289,8 +410,24 @@ export async function getAllAppointments() {
 }
 
 export async function updateAppointmentStatus(appointment, newStatus) {
-  const callable = httpsCallable(functions, "updateAppointmentStatus");
-  await callable({ appointmentId: appointment.id, status: newStatus });
+  const batch = writeBatch(db);
+  batch.update(doc(db, "appointments", appointment.id), {
+    status: newStatus,
+    updatedAt: serverTimestamp(),
+  });
+  if (newStatus === "cancelled") {
+    const slotIds = Array.isArray(appointment.slotIds)
+      ? appointment.slotIds
+      : appointment.slotId ? [appointment.slotId] : [];
+    slotIds.forEach((id) => batch.delete(doc(db, "availability", id)));
+  }
+  if (newStatus === "completed" && appointment.status !== "completed" && appointment.clientUid) {
+    batch.update(doc(db, "users", appointment.clientUid), {
+      visitsCount: increment(1),
+      updatedAt: serverTimestamp(),
+    });
+  }
+  await batch.commit();
 }
 
 export async function getAllPlanRequests() {
@@ -300,8 +437,10 @@ export async function getAllPlanRequests() {
 }
 
 export async function updatePlanRequestStatus(requestId, status) {
-  const callable = httpsCallable(functions, "updatePlanRequestStatus");
-  await callable({ requestId, status });
+  await updateDoc(doc(db, "planRequests", requestId), {
+    status,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function getAllPromotions() {
@@ -388,7 +527,6 @@ const api = {
   getAllPlanRequests,
   updatePlanRequestStatus,
   getAllPromotions,
-  migrateLegacyData,
   savePromotion,
   deletePromotion,
   saveCatalogItem,

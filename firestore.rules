@@ -50,7 +50,7 @@ rules_version = '2';
 //   - time: string (required, 4..10 chars)
 //   - totalPrice: number (required, >= 0)
 //   - totalDuration: int (required, > 0)
-//   - status: string (required, created/updated by callable functions)
+//   - status: string (required, pending on create; admin-managed updates or owner cancellation)
 //   - slotId: string (first occupied slot, for legacy compatibility)
 //   - slotIds: list<string> (all occupied interval blocks)
 //   - createdAt: timestamp (immutable)
@@ -67,7 +67,7 @@ rules_version = '2';
 // Collection: planRequests
 // Document ID: {requestId}
 // Fields:
-//   - clientUid: string (required, == request.auth.uid; written by callable functions)
+//   - clientUid: string (required, == request.auth.uid on client create)
 //   - clientEmail: string (optional, 0..160 chars)
 //   - clientName: string (required, 1..120 chars)
 //   - clientPhone: string (required, 8..25 chars)
@@ -141,6 +141,91 @@ service cloud.firestore {
         (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
+    function isValidAppointmentCreate(data, appointmentId) {
+      let firstSlotPath = /databases/$(database)/documents/availability/$(data.slotId);
+      let barberPath = /databases/$(database)/documents/barbers/$(data.barberId);
+      return hasOnlyAllowedFields([
+          'code', 'clientUid', 'clientEmail', 'clientName', 'clientPhone',
+          'serviceIds', 'serviceNames', 'requestedBarberId', 'barberId', 'barberName',
+          'dateIso', 'dateFull', 'time', 'totalPrice', 'totalDuration',
+          'status', 'slotId', 'slotIds', 'createdAt', 'updatedAt'
+        ]) &&
+        data.clientUid == request.auth.uid &&
+        data.status == 'pending' &&
+        data.serviceIds is list && data.serviceIds.size() > 0 && data.serviceIds.size() <= 15 &&
+        (!('serviceNames' in data) || (data.serviceNames is list && data.serviceNames.size() <= 15)) &&
+        isValidString(data.barberId, 1, 80) &&
+        exists(barberPath) && get(barberPath).data.active != false &&
+        data.barberName == get(barberPath).data.name &&
+        (data.requestedBarberId == data.barberId || data.requestedBarberId == 'sem-preferencia') &&
+        isValidOptionalString(data, 'requestedBarberId', 1, 80) &&
+        isValidOptionalString(data, 'barberName', 0, 120) &&
+        isValidString(data.dateIso, 10, 10) &&
+        isValidOptionalString(data, 'dateFull', 0, 80) &&
+        isValidString(data.time, 5, 5) &&
+        data.totalPrice is number && data.totalPrice >= 0 && data.totalPrice <= 100000 &&
+        data.totalDuration is int && data.totalDuration > 0 && data.totalDuration <= 480 &&
+        isValidString(data.clientName, 1, 120) && isValidString(data.clientPhone, 8, 25) &&
+        isValidOptionalString(data, 'clientEmail', 0, 160) &&
+        isValidOptionalString(data, 'code', 0, 30) &&
+        data.slotIds is list && data.slotIds.size() > 0 && data.slotIds.size() <= 32 &&
+        isValidString(data.slotId, 1, 120) &&
+        data.slotId == data.slotIds[0] &&
+        existsAfter(firstSlotPath) && getAfter(firstSlotPath).data.appointmentId == appointmentId &&
+        getAfter(firstSlotPath).data.dateIso == data.dateIso &&
+        getAfter(firstSlotPath).data.barberId == data.barberId &&
+        getAfter(firstSlotPath).data.time == data.time &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAppointmentClientCancel(data) {
+      return resource.data.clientUid == request.auth.uid &&
+        resource.data.status in ['pending', 'confirmed'] && data.status == 'cancelled' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAvailabilityCreate(slotId, data) {
+      let appointmentPath = /databases/$(database)/documents/appointments/$(data.appointmentId);
+      let idParts = slotId.split('__');
+      let timeParts = data.time.split(':');
+      let idTimeParts = idParts[2].split('-');
+      return hasOnlyAllowedFields([
+          'dateIso', 'barberId', 'time', 'appointmentId', 'status', 'createdAt'
+        ]) &&
+        data.status == 'booked' &&
+        isValidString(data.dateIso, 10, 10) && isValidString(data.barberId, 1, 80) &&
+        data.time.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$') &&
+        idParts.size() == 3 && idParts[0] == data.dateIso && idParts[1] == data.barberId &&
+        timeParts.size() == 2 && idTimeParts.size() == 2 &&
+        idTimeParts[0] == timeParts[0] && idTimeParts[1] == timeParts[1] &&
+        isValidString(data.appointmentId, 1, 120) &&
+        existsAfter(appointmentPath) && getAfter(appointmentPath).data.clientUid == request.auth.uid &&
+        getAfter(appointmentPath).data.slotIds.hasAny([slotId]) &&
+        getAfter(appointmentPath).data.dateIso == data.dateIso &&
+        getAfter(appointmentPath).data.barberId == data.barberId &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPlanRequestCreate(data) {
+      let planPath = /databases/$(database)/documents/plans/$(data.planId);
+      return hasOnlyAllowedFields([
+          'clientUid', 'clientEmail', 'clientName', 'clientPhone',
+          'planId', 'planName', 'planPrice', 'waitlist', 'status', 'createdAt'
+        ]) &&
+        data.clientUid == request.auth.uid && data.status == 'pending' &&
+        isValidString(data.planId, 1, 80) && isValidString(data.planName, 1, 120) &&
+        isValidString(data.clientName, 1, 120) && isValidString(data.clientPhone, 8, 25) &&
+        isValidOptionalString(data, 'clientEmail', 0, 160) &&
+        data.planPrice is number && data.planPrice >= 0 && data.planPrice <= 100000 &&
+        data.waitlist is bool && exists(planPath) &&
+        get(planPath).data.active != false && data.planName == get(planPath).data.name &&
+        data.planPrice == get(planPath).data.price &&
+        data.waitlist == (get(planPath).data.slots <= 0 || get(planPath).data.badge == 'Esgotado') &&
+        data.createdAt is timestamp;
+    }
+
     function isFirstVisitPromotion(data) {
       let profilePath = /databases/$(database)/documents/users/$(request.auth.uid);
       return isAuthenticated() && data.target == 'first_visit' &&
@@ -202,10 +287,10 @@ service cloud.firestore {
     }
 
     match /settings/{docId} {
-      allow get: if docId == 'barbershop' && resource.data.keys().hasOnly([
+      allow get: if isAdmin() || (docId == 'barbershop' && resource.data.keys().hasOnly([
         'name', 'unit', 'days', 'hours', 'openingTime', 'closingTime',
         'openDays', 'slotIntervalMinutes', 'catalogVersion', 'updatedAt'
-      ]);
+      ]));
       allow list: if false;
       allow write: if isAdmin();
     }
@@ -219,22 +304,27 @@ service cloud.firestore {
     // Appointments (client creates pending & can cancel pending/confirmed; admin manages all)
     match /appointments/{appointmentId} {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.clientUid == request.auth.uid);
-      allow write: if false;
+      allow create: if isAuthenticated() && isValidAppointmentCreate(request.resource.data, appointmentId);
+      allow update: if isAdmin() || (isAuthenticated() && isValidAppointmentClientCancel(request.resource.data));
+      allow delete: if isAdmin();
     }
 
     // Public availability slot locks (NO PII)
     match /availability/{slotId} {
       allow read: if isAdmin() || resource.data.keys().hasOnly([
-        'dateIso', 'barberId', 'time', 'status', 'createdAt'
+        'dateIso', 'barberId', 'time', 'appointmentId', 'status', 'createdAt'
       ]);
-      allow write: if false;
+      allow create: if isAuthenticated() && isValidAvailabilityCreate(slotId, request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (isAuthenticated() &&
+        get(/databases/$(database)/documents/appointments/$(resource.data.appointmentId)).data.clientUid == request.auth.uid);
     }
 
     // Club plan interest / waitlist requests
     match /planRequests/{requestId} {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.clientUid == request.auth.uid);
-      allow create: if false;
-      allow update, delete: if false;
+      allow create: if isAuthenticated() && isValidPlanRequestCreate(request.resource.data);
+      allow update, delete: if isAdmin();
     }
 
     // Default deny fallback

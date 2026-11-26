@@ -7,7 +7,6 @@ import {
   getAllPromotions,
   loadCatalogFromFirestore,
   logout,
-  migrateLegacyData,
   onAuthChange,
   saveCatalogItem,
   savePromotion,
@@ -319,20 +318,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showFeedback($("#settings-feedback"), "Configurações salvas. A agenda atualiza nas próximas visitas.");
     } catch (err) {
       showFeedback($("#settings-feedback"), formatFirebaseError(err), true);
-    }
-  });
-
-  $("#migrate-legacy-data-btn")?.addEventListener("click", async (event) => {
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    showFeedback($("#legacy-data-migration-feedback"), "Protegendo os dados antigos...");
-    try {
-      const result = await migrateLegacyData();
-      showFeedback($("#legacy-data-migration-feedback"), `${result.migratedSlots} registro(s) da agenda e ${result.sanitizedPromos} promoções protegidos.`);
-    } catch (err) {
-      showFeedback($("#legacy-data-migration-feedback"), formatFirebaseError(err), true);
-    } finally {
-      btn.disabled = false;
     }
   });
 

@@ -1104,7 +1104,6 @@
             clientName: $("#client-name").value,
             clientPhone: phoneInput.value,
           });
-          totalPrice = Number(result.totalPrice);
           assignedBarber = BARBERS.find((person) => person.id === result.barberId) || {
             id: result.barberId,
             name: result.barberName || "Profissional",
