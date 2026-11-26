@@ -328,6 +328,10 @@ test('mobile: choices fit above persistent navigation and the barber stays selec
     assert.equal(await visibleAboveNavigation('#booking-times'), true);
     await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-compact-times.png') });
     assert.equal(await page.locator('[data-booking-step="3"]').isVisible(), true);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.locator('#booking-sticky-bar').evaluate(el => getComputedStyle(el).position), 'static');
+    assert.equal(await page.locator('.site-footer').isVisible(), false);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-times-tall-mobile.png') });
   } finally { await context.close(); }
 });
 
@@ -375,13 +379,17 @@ test('homepage: booking stays prominent and two plans replace the service and te
     assert.equal(await page.locator('#home-team-preview').count(), 0);
     assert.deepEqual(await page.locator('.home-club-card h3').allTextContents(), ['ESSENCIAL - Corte', 'ESSENCIAL - Corte + Barba']);
     assert.equal(await page.locator('.home-club-plan-label').count(), 2);
+    assert.equal(await page.locator('.home-club-benefit').first().isVisible(), false);
     assert.deepEqual(await page.locator('.home-club-price small').allTextContents(), ['Mensalidade', 'Mensalidade']);
     assert.match(await page.locator('#home-club-more-copy').innerText(), /mais 4 planos mensais/);
-    assert.equal(await page.locator('#home-club-all-link').innerText(), 'Ver os 6 planos mensais →');
+    assert.equal(await page.locator('#home-club-all-link').innerText(), 'Comparar os 6 planos mensais →');
     assert.deepEqual(await page.locator('.home-club-card a').evaluateAll(links => links.map(link => new URL(link.href).searchParams.get('plano'))), ['essencial-corte', 'essencial-corte-barba']);
     assert.equal(await page.locator('a[href="planos.html"]').count() > 0, true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.screenshot({ path: path.join(os.tmpdir(), 'castellari-home-plans-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 320, height: 568 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.setViewportSize({ width: 390, height: 700 });
     await page.locator('#home-club-all-link').click();
     assert.equal(await page.locator('h1').innerText(), 'Planos mensais');
     assert.equal(await page.locator('.plan-card h3').count(), 6);
@@ -389,6 +397,7 @@ test('homepage: booking stays prominent and two plans replace the service and te
     await page.setViewportSize({ width: 1280, height: 900 });
     const cards = await page.locator('.home-club-card').evaluateAll(items => items.map(item => item.getBoundingClientRect().top));
     assert.equal(cards[0], cards[1]);
+    assert.equal(await page.locator('.home-club-benefit').first().isVisible(), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }

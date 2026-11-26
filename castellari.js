@@ -262,10 +262,11 @@
     });
     grid.innerHTML = chosen.map((plan) => {
       const soldOut = plan.slots === 0 || plan.badge === "Esgotado";
-      const action = soldOut ? "Entrar na lista de espera" : "Consultar este plano";
-      const shortAction = soldOut ? "Lista de espera" : "Consultar";
+      const action = soldOut ? "Entrar na lista de espera" : "Tenho interesse";
+      const shortAction = soldOut ? "Lista de espera" : "Tenho interesse";
       return '<article class="home-club-card"><span class="home-club-plan-label">Assinatura mensal</span><h3>' + escapeHTML(plan.name) + '</h3>' +
         '<p>' + escapeHTML(plan.days || "Consulte os dias de atendimento") + '</p>' +
+        (plan.discount ? '<p class="home-club-benefit">' + escapeHTML(plan.discount) + '</p>' : '') +
         '<div class="home-club-card-footer"><div class="home-club-price"><small>Mensalidade</small>' + money(plan.price) + '<span> por mês</span></div>' +
         '<a class="button button-small" href="agendar.html?plano=' + encodeURIComponent(plan.id) + '" aria-label="' + escapeHTML(action + ': ' + plan.name) + '">' +
         '<span class="home-club-action-full">' + action + '</span><span class="home-club-action-short">' + shortAction + '</span><span aria-hidden="true">→</span></a></div></article>';
@@ -277,7 +278,7 @@
       $("#home-club-more-copy").textContent = remaining > 0
         ? "Além destes, há mais " + remaining + (remaining === 1 ? " plano mensal" : " planos mensais") + " para comparar."
         : "Compare benefícios e condições de todos os planos mensais.";
-      $("#home-club-all-link").textContent = "Ver os " + PLANS.length + (PLANS.length === 1 ? " plano mensal →" : " planos mensais →");
+      $("#home-club-all-link").textContent = "Comparar os " + PLANS.length + (PLANS.length === 1 ? " plano mensal →" : " planos mensais →");
     }
     grid.setAttribute("aria-busy", "false");
   }
@@ -813,6 +814,7 @@
       });
       document.body.classList.toggle("booking-selection-step", currentStep <= 3);
       document.body.classList.toggle("booking-review-step", currentStep === 4);
+      document.body.dataset.currentBookingStep = String(currentStep);
 
       $$("[data-step-indicator]").forEach((item) => {
         const number = Number(item.dataset.stepIndicator);
