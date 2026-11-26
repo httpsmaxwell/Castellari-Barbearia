@@ -1,26 +1,22 @@
-BARBEARIA CASTELLARI — PROTÓTIPO DE APRESENTAÇÃO
+BARBEARIA CASTELLARI
 
-Site estático multipágina para apresentar a proposta visual e os principais fluxos da Barbearia Castellari.
+Site estático multipágina integrado ao Firebase.
 
-Páginas:
-- index.html      Apresentação da barbearia e destaques
-- servicos.html   Catálogo com busca e filtros por categoria
-- planos.html     Clube Castellari e planos mensais
-- equipe.html     Profissionais da unidade
-- agendar.html    Prévia interativa de agendamento e interesse em plano
+Páginas principais:
+- index.html       Apresentação
+- servicos.html    Catálogo
+- planos.html      Clube Castellari
+- equipe.html      Profissionais
+- agendar.html     Agendamento e interesse em plano
+- conta.html       Login, histórico e promoções
+- admin.html       Administração
 
-Arquivos compartilhados:
-- castellari.css       Identidade visual, temas claro/escuro e responsividade
-- castellari-data.js   Dados do protótipo (serviços, planos e equipe)
-- castellari.js        Interações de interface e fluxo de agendamento
-- check.js             Arquivo antigo mantido no diretório; as páginas atuais não o carregam
+Arquivos principais:
+- castellari.css, castellari.js e castellari-data.js
+- castellari-firebase.js e firebase-config.js
+- functions/       Operações de reserva e plano no servidor
+- firestore.rules e firestore.indexes.json
 
-Como visualizar/publicar:
-1. Mantenha estes arquivos juntos.
-2. Abra index.html ou publique a pasta como site estático no Netlify.
+O site não exige build. Abra index.html para ver as páginas estáticas. Para login, reservas, solicitações e administração, publique antes as Cloud Functions e regras Firebase conforme o README.md.
 
-A versão atual não usa backend nem Firebase. O agendamento é uma demonstração: horários são exemplos, os dados de contato não são enviados nem salvos e nenhuma reserva é criada. A conexão com Firebase ficará para uma etapa posterior.
-
-Preços, benefícios, vagas, nomes, especialidades e horários foram preservados do protótipo e precisam ser confirmados pela barbearia antes de usar o site como canal oficial. Ainda não foram fornecidos logotipo oficial, fotos da unidade, endereço completo ou contato público; o monograma tipográfico é provisório.
-
-O projeto não exige build. A tipografia Lora e Manrope é carregada do Google Fonts, com fontes locais de fallback.
+Sem as funções publicadas, os fluxos de reserva e solicitação ficam indisponíveis e não exibem sucesso. Preços, vagas, profissionais, telefone, endereço, horários e redes sociais precisam de confirmação da barbearia antes do uso oficial.

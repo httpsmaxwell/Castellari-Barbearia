@@ -14,17 +14,16 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   orderBy,
   query,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { auth, db, googleProvider } from "./firebase-config.js";
+import { auth, db, functions, googleProvider } from "./firebase-config.js?v=7";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-functions.js";
 
 const AUTH_ERROR_MESSAGES = {
   "auth/email-already-in-use": "Este e-mail já está cadastrado. Tente entrar ou recuperar a senha.",
@@ -183,85 +182,41 @@ export function makeSlotId(dateIso, barberId, time) {
 
 export async function getBookedTimesForDay(dateIso, barberId) {
   if (!dateIso || !barberId) return [];
-  const q = query(
-    collection(db, "availability"),
-    where("dateIso", "==", dateIso),
-    where("barberId", "==", barberId)
-  );
+  const constraints = [where("dateIso", "==", dateIso)];
+  if (barberId !== "sem-preferencia") constraints.push(where("barberId", "==", barberId));
+  const q = query(collection(db, "availability"), ...constraints);
   const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data().time).filter(Boolean);
+  return snap.docs.map((d) => ({ barberId: d.data().barberId, time: d.data().time }))
+    .filter((slot) => slot.barberId && slot.time);
 }
 
 export async function createBooking({
   user,
   serviceIds,
-  serviceNames,
   barberId,
-  barberName,
   dateIso,
   dateFull,
   time,
-  totalPrice,
-  totalDuration,
   clientName,
   clientPhone,
 }) {
   if (!user) throw new Error("Faça login para confirmar o agendamento.");
-  const appointmentRef = doc(collection(db, "appointments"));
-  const slotId = makeSlotId(dateIso, barberId, time);
-  const slotRef = doc(db, "availability", slotId);
-  const code = "CST-" + appointmentRef.id.slice(0, 5).toUpperCase();
-
-  await runTransaction(db, async (tx) => {
-    const existingSlot = await tx.get(slotRef);
-    if (existingSlot.exists()) {
-      throw new Error("SLOT_TAKEN");
-    }
-    tx.set(appointmentRef, {
-      code,
-      clientUid: user.uid,
-      clientEmail: user.email || "",
-      clientName: clientName.trim(),
-      clientPhone: clientPhone.trim(),
-      serviceIds,
-      serviceNames,
-      barberId,
-      barberName,
-      dateIso,
-      dateFull,
-      time,
-      totalPrice: Number(totalPrice),
-      totalDuration: Math.round(Number(totalDuration)),
-      status: "pending",
-      slotId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    tx.set(slotRef, {
-      dateIso,
-      barberId,
-      time,
-      appointmentId: appointmentRef.id,
-      clientUid: user.uid,
-      status: "booked",
-      createdAt: serverTimestamp(),
-    });
+  const callable = httpsCallable(functions, "createBooking");
+  const result = await callable({
+    serviceIds,
+    barberId,
+    dateIso,
+    dateFull,
+    time,
+    clientName: clientName.trim(),
+    clientPhone: clientPhone.trim(),
   });
-
-  await ensureUserProfile(user, { name: clientName.trim(), phone: clientPhone.trim() });
-  return { id: appointmentRef.id, code };
+  return result.data;
 }
 
 export async function cancelClientAppointment(appointmentId, slotId) {
-  const batch = writeBatch(db);
-  batch.update(doc(db, "appointments", appointmentId), {
-    status: "cancelled",
-    updatedAt: serverTimestamp(),
-  });
-  if (slotId) {
-    batch.delete(doc(db, "availability", slotId));
-  }
-  await batch.commit();
+  const callable = httpsCallable(functions, "cancelClientAppointment");
+  await callable({ appointmentId, slotId });
 }
 
 export async function getUserAppointments(uid) {
@@ -276,20 +231,13 @@ export async function getUserAppointments(uid) {
 
 export async function createPlanRequest({ user, plan, clientName, clientPhone }) {
   if (!user) throw new Error("Faça login para registrar seu interesse no plano.");
-  const ref = await addDoc(collection(db, "planRequests"), {
-    clientUid: user.uid,
-    clientEmail: user.email || "",
+  const callable = httpsCallable(functions, "createPlanRequest");
+  const result = await callable({
+    planId: plan.id,
     clientName: clientName.trim(),
     clientPhone: clientPhone.trim(),
-    planId: plan.id,
-    planName: plan.name,
-    planPrice: Number(plan.price),
-    waitlist: plan.slots === 0 || plan.badge === "Esgotado",
-    status: "pending",
-    createdAt: serverTimestamp(),
   });
-  await ensureUserProfile(user, { name: clientName.trim(), phone: clientPhone.trim() });
-  return ref.id;
+  return result.data;
 }
 
 export async function getUserPlanRequests(uid) {
@@ -303,22 +251,32 @@ export async function getUserPlanRequests(uid) {
 }
 
 export async function getEligiblePromotions(user, profile) {
-  const q = query(collection(db, "promotions"), where("active", "==", true));
-  const snap = await getDocs(q);
   const email = (user && user.email ? user.email : "").toLowerCase();
   const visits = profile && typeof profile.visitsCount === "number" ? profile.visitsCount : 0;
   const hasClub = Boolean(profile && profile.clubPlan);
+  const promos = collection(db, "promotions");
+  const queries = [query(promos, where("active", "==", true), where("target", "==", "all"))];
+  if (email) queries.push(query(
+    promos,
+    where("active", "==", true),
+    where("target", "==", "email"),
+    where("targetEmail", "==", email)
+  ));
+  if (visits === 0) queries.push(query(promos, where("active", "==", true), where("target", "==", "first_visit")));
+  if (hasClub) queries.push(query(promos, where("active", "==", true), where("target", "==", "club")));
 
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .filter((promo) => {
-      const target = promo.target || "all";
-      if (target === "all") return true;
-      if (target === "first_visit") return visits === 0;
-      if (target === "club") return hasClub;
-      if (target === "email") return Boolean(email && String(promo.targetEmail || "").toLowerCase() === email);
-      return false;
-    });
+  const snapshots = await Promise.all(queries.map((item) => getDocs(item)));
+  const unique = new Map();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((docSnap) => {
+    unique.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+  }));
+  return [...unique.values()];
+}
+
+export async function migrateLegacyData() {
+  const callable = httpsCallable(functions, "migrateLegacyData");
+  const result = await callable({});
+  return result.data;
 }
 
 // ==========================================================================
@@ -331,21 +289,8 @@ export async function getAllAppointments() {
 }
 
 export async function updateAppointmentStatus(appointment, newStatus) {
-  const batch = writeBatch(db);
-  batch.update(doc(db, "appointments", appointment.id), {
-    status: newStatus,
-    updatedAt: serverTimestamp(),
-  });
-  if (newStatus === "cancelled" && appointment.slotId) {
-    batch.delete(doc(db, "availability", appointment.slotId));
-  }
-  if (newStatus === "completed" && appointment.status !== "completed" && appointment.clientUid) {
-    batch.update(doc(db, "users", appointment.clientUid), {
-      visitsCount: increment(1),
-      updatedAt: serverTimestamp(),
-    });
-  }
-  await batch.commit();
+  const callable = httpsCallable(functions, "updateAppointmentStatus");
+  await callable({ appointmentId: appointment.id, status: newStatus });
 }
 
 export async function getAllPlanRequests() {
@@ -355,10 +300,8 @@ export async function getAllPlanRequests() {
 }
 
 export async function updatePlanRequestStatus(requestId, status) {
-  await updateDoc(doc(db, "planRequests", requestId), {
-    status,
-    updatedAt: serverTimestamp(),
-  });
+  const callable = httpsCallable(functions, "updatePlanRequestStatus");
+  await callable({ requestId, status });
 }
 
 export async function getAllPromotions() {
@@ -405,7 +348,11 @@ export async function seedCatalogFromLocal(localData) {
       name: "Barbearia Castellari",
       unit: "Planalto · Manaus, AM",
       days: "Segunda a sábado",
-      hours: "09h às 19h",
+      hours: "09h às 20h",
+      openingTime: "09:00",
+      closingTime: "20:00",
+      openDays: [1, 2, 3, 4, 5, 6],
+      slotIntervalMinutes: 60,
       catalogVersion: localData.CATALOG_VERSION || 2,
       updatedAt: serverTimestamp(),
     },
@@ -441,6 +388,7 @@ const api = {
   getAllPlanRequests,
   updatePlanRequestStatus,
   getAllPromotions,
+  migrateLegacyData,
   savePromotion,
   deletePromotion,
   saveCatalogItem,

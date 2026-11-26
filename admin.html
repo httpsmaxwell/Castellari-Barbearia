@@ -12,10 +12,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
   <link rel="stylesheet" href="castellari.css">
-  <script src="castellari-data.js" defer></script>
-  <script type="module" src="castellari-firebase.js"></script>
-  <script src="castellari.js" defer></script>
-  <script type="module" src="admin.js"></script>
+  <script src="castellari-data.js?v=7" defer></script>
+  <script type="module" src="castellari-firebase.js?v=7"></script>
+  <script src="castellari.js?v=7" defer></script>
+  <script type="module" src="admin.js?v=7"></script>
 </head>
 <body data-page="admin">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -23,7 +23,7 @@
   <div class="container header-row">
     <a class="brand" href="index.html" aria-label="Barbearia Castellari — início">
       <span class="brand-mark" aria-hidden="true"><span>C</span></span>
-      <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Administração</span></span>
+      <span><span class="brand-name" data-shop-name>BARBEARIA CASTELLARI</span><span class="brand-tag">Administração</span></span>
     </a>
     <nav class="primary-nav" aria-label="Navegação principal">
       <a data-nav="home" href="index.html">Site</a>
@@ -141,15 +141,18 @@
         <form id="shop-settings-form" class="booking-form">
           <div class="form-grid">
             <div class="field"><label for="shop-name">Nome da barbearia</label><input id="shop-name" type="text" required></div>
-            <div class="field"><label for="shop-unit">Unidade / Endereço</label><input id="shop-unit" type="text" required></div>
+            <div class="field"><label for="shop-unit">Região da unidade</label><input id="shop-unit" type="text" required></div>
           </div>
           <div class="form-grid">
-            <div class="field"><label for="shop-days">Dias de funcionamento</label><input id="shop-days" type="text" required></div>
-            <div class="field"><label for="shop-hours">Horário</label><input id="shop-hours" type="text" required></div>
+            <div class="field"><label for="shop-opening-time">Abre às</label><input id="shop-opening-time" type="time" value="09:00" required></div>
+            <div class="field"><label for="shop-closing-time">Fecha às</label><input id="shop-closing-time" type="time" value="20:00" required></div>
           </div>
+          <div class="field"><label for="shop-open-days">Dias abertos para agendamento (0=domingo, 6=sábado; separados por vírgula)</label><input id="shop-open-days" type="text" value="1,2,3,4,5,6" required></div>
           <button type="submit" class="button button-small">Salvar informações</button>
         </form>
         <p id="settings-feedback" class="auth-feedback" role="status" hidden></p>
+        <button type="button" class="button button-outline button-small" id="migrate-legacy-data-btn">Proteger dados antigos</button>
+        <p id="legacy-data-migration-feedback" class="auth-feedback" role="status" hidden></p>
       </section>
     </div>
   </div>

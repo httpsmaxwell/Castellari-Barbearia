@@ -7,6 +7,7 @@ import {
   getAllPromotions,
   loadCatalogFromFirestore,
   logout,
+  migrateLegacyData,
   onAuthChange,
   saveCatalogItem,
   savePromotion,
@@ -14,7 +15,7 @@ import {
   seedCatalogFromLocal,
   updateAppointmentStatus,
   updatePlanRequestStatus,
-} from "./castellari-firebase.js";
+} from "./castellari-firebase.js?v=7";
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -113,8 +114,13 @@ async function refreshAgenda() {
   reqRoot.querySelectorAll("[data-req-status]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
-      await updatePlanRequestStatus(btn.dataset.reqId, btn.dataset.reqStatus);
-      await refreshAgenda();
+      try {
+        await updatePlanRequestStatus(btn.dataset.reqId, btn.dataset.reqStatus);
+        await refreshAgenda();
+      } catch (err) {
+        alert(formatFirebaseError(err));
+        btn.disabled = false;
+      }
     });
   });
 }
@@ -148,12 +154,13 @@ async function refreshCatalog() {
       const id = btn.dataset.savePlan;
       const slots = Number($(`[data-plan-slots="${id}"]`).value);
       const price = Number($(`[data-plan-price="${id}"]`).value);
+      const originalPlan = (window.CastellariData?.PLANS || []).find((plan) => plan.id === id);
       btn.disabled = true;
       try {
         await saveCatalogItem("plans", id, {
           slots,
           price,
-          badge: slots === 0 ? "Esgotado" : null,
+          badge: slots === 0 ? "Esgotado" : (originalPlan?.badge || null),
         });
         showFeedback($("#catalog-admin-feedback"), "Plano atualizado no Firestore.");
       } catch (err) {
@@ -203,8 +210,9 @@ async function refreshCatalog() {
   if (catalog.settings) {
     $("#shop-name").value = catalog.settings.name || "Barbearia Castellari";
     $("#shop-unit").value = catalog.settings.unit || "Planalto · Manaus, AM";
-    $("#shop-days").value = catalog.settings.days || "Segunda a sábado";
-    $("#shop-hours").value = catalog.settings.hours || "09h às 19h";
+    $("#shop-opening-time").value = catalog.settings.openingTime || "09:00";
+    $("#shop-closing-time").value = catalog.settings.closingTime || "20:00";
+    $("#shop-open-days").value = (catalog.settings.openDays || [1, 2, 3, 4, 5, 6]).join(",");
   }
 }
 
@@ -272,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
         title: $("#promo-title").value.trim(),
         code: $("#promo-code").value.trim().toUpperCase(),
         target: $("#promo-target").value,
-        targetEmail: $("#promo-email").value.trim().toLowerCase(),
+        targetEmail: $("#promo-target").value === "email" ? $("#promo-email").value.trim().toLowerCase() : "",
         description: $("#promo-desc").value.trim(),
         active: true,
       });
@@ -286,16 +294,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#shop-settings-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const openDays = $("#shop-open-days").value.split(",").map((value) => Number(value.trim()));
+    if (!openDays.length || openDays.some((day) => !Number.isInteger(day) || day < 0 || day > 6) || new Set(openDays).size !== openDays.length) {
+      showFeedback($("#settings-feedback"), "Informe os dias como números de 0 a 6, sem repetição.", true);
+      return;
+    }
+    const weekdayNames = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+    const daysLabel = openDays.length === 6 && !openDays.includes(0)
+      ? "Segunda a sábado"
+      : openDays.map((day) => weekdayNames[day]).join(", ");
+    const formatHour = (value) => value.replace(":", "h");
+    const hoursLabel = `${formatHour($("#shop-opening-time").value)} às ${formatHour($("#shop-closing-time").value)}`;
     try {
       await saveShopSettings({
         name: $("#shop-name").value.trim(),
         unit: $("#shop-unit").value.trim(),
-        days: $("#shop-days").value.trim(),
-        hours: $("#shop-hours").value.trim(),
+        days: daysLabel,
+        hours: hoursLabel,
+        openingTime: $("#shop-opening-time").value,
+        closingTime: $("#shop-closing-time").value,
+        openDays,
+        slotIntervalMinutes: 60,
       });
-      showFeedback($("#settings-feedback"), "Configurações da barbearia atualizadas.");
+      showFeedback($("#settings-feedback"), "Configurações salvas. A agenda atualiza nas próximas visitas.");
     } catch (err) {
       showFeedback($("#settings-feedback"), formatFirebaseError(err), true);
+    }
+  });
+
+  $("#migrate-legacy-data-btn")?.addEventListener("click", async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    showFeedback($("#legacy-data-migration-feedback"), "Protegendo os dados antigos...");
+    try {
+      const result = await migrateLegacyData();
+      showFeedback($("#legacy-data-migration-feedback"), `${result.migratedSlots} registro(s) da agenda e ${result.sanitizedPromos} promoções protegidos.`);
+    } catch (err) {
+      showFeedback($("#legacy-data-migration-feedback"), formatFirebaseError(err), true);
+    } finally {
+      btn.disabled = false;
     }
   });
 

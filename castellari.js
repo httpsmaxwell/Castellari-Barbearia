@@ -4,7 +4,7 @@
   let PLANS = data.PLANS || [];
   let BARBERS = data.BARBERS || [];
   let CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
-  const TIME_SLOTS = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+  let SHOP_SETTINGS = { openingTime: "09:00", closingTime: "20:00", openDays: [1, 2, 3, 4, 5, 6], slotIntervalMinutes: 60 };
   const BOOKING_STORAGE_KEY = "castellari-booking";
   const THEME_STORAGE_KEY = "castellari-theme";
 
@@ -228,7 +228,7 @@
           const badge = soldOut ? "Lista de espera" : (plan.badge || "Clube Castellari");
           const availability = soldOut
             ? "Vagas temporariamente preenchidas"
-            : (plan.slots ? plan.slots + " vagas disponíveis" : "Consulte a equipe");
+            : (plan.slots ? plan.slots + " vagas informadas · confirme com a equipe" : "Consulte a equipe");
           const planParam = encodeURIComponent(plan.id || String(index));
           return (
             '<article class="plan-card ' + (plan.badgeType === "gold" ? "is-featured" : "") + '">' +
@@ -304,12 +304,12 @@
     ].join("-");
   }
 
-  function upcomingDays() {
+  function upcomingDays(openDays = SHOP_SETTINGS.openDays) {
     const days = [];
     const today = new Date();
-    for (let offset = 1; days.length < 7 && offset < 15; offset += 1) {
+    for (let offset = 1; days.length < 7 && offset < 31; offset += 1) {
       const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
-      if (date.getDay() === 0) continue;
+      if (!openDays.includes(date.getDay())) continue;
       const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", "");
       const month = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "");
       days.push({
@@ -319,6 +319,25 @@
       });
     }
     return days;
+  }
+
+  function clockMinutes(value, fallback) {
+    const match = /^(\d{2}):(\d{2})$/.exec(String(value || ""));
+    return match ? Number(match[1]) * 60 + Number(match[2]) : fallback;
+  }
+
+  function timeSlotsForDuration(duration = 0) {
+    const interval = [15, 30, 60].includes(Number(SHOP_SETTINGS.slotIntervalMinutes))
+      ? Number(SHOP_SETTINGS.slotIntervalMinutes)
+      : 60;
+    const opening = clockMinutes(SHOP_SETTINGS.openingTime, 540);
+    const closing = clockMinutes(SHOP_SETTINGS.closingTime, 1200);
+    const reservedDuration = Math.max(interval, Math.ceil(duration / interval) * interval);
+    const result = [];
+    for (let minute = opening; minute + reservedDuration <= closing; minute += interval) {
+      result.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
+    }
+    return result;
   }
 
   function findPlan(param) {
@@ -401,16 +420,21 @@
         return;
       }
 
+      if (!fb()) {
+        alert("O envio de solicitações está temporariamente indisponível. Tente novamente mais tarde ou fale com a barbearia.");
+        return;
+      }
+
       if (fb() && currentUser) {
         try {
-          await fb().createPlanRequest({
+          const result = await fb().createPlanRequest({
             user: currentUser,
             plan,
             clientName: $("#plan-client-name").value,
             clientPhone: phoneInput.value,
           });
           $("#plan-success-note").textContent =
-            "Sua solicitação para o plano " + plan.name + " foi registrada. Acompanhe o status em Minha Conta.";
+            "Sua solicitação para o plano " + (result.planName || plan.name) + " foi registrada. Acompanhe o status em Minha Conta.";
         } catch (err) {
           alert(fb().formatFirebaseError(err));
           return;
@@ -445,7 +469,7 @@
     const firstService = params.get("service");
     const firstBarber = params.get("barber");
     const saved = readStorageJSON(BOOKING_STORAGE_KEY, {});
-    const days = upcomingDays();
+    let days = upcomingDays();
 
     const savedIds = Array.isArray(saved.selectedServiceIds)
       ? saved.selectedServiceIds.filter((id) => SERVICES.some((service) => service.id === id))
@@ -454,7 +478,7 @@
     if (SERVICES.some((service) => service.id === firstService)) selected.add(firstService);
 
     let selectedDay = days.find((day) => day.iso === saved.selectedDayIso) || null;
-    let selectedTime = TIME_SLOTS.includes(saved.selectedTime) ? saved.selectedTime : null;
+    let selectedTime = timeSlotsForDuration(0).includes(saved.selectedTime) ? saved.selectedTime : null;
 
     const serviceRoot = $("#booking-services");
     const serviceTabsRoot = $("#booking-service-tabs");
@@ -717,39 +741,107 @@
     }
 
     const dayRoot = $("#booking-days");
-    dayRoot.innerHTML = days.map((day) =>
-      '<button type="button" class="choice-button" data-day="' + day.iso + '" aria-label="' + escapeHTML(day.full) + '" aria-pressed="' + String(Boolean(selectedDay && selectedDay.iso === day.iso)) + '">' + escapeHTML(day.label) + "</button>"
-    ).join("");
-    dayRoot.setAttribute("aria-busy", "false");
+    function renderDayButtons() {
+      dayRoot.innerHTML = days.map((day) =>
+        '<button type="button" class="choice-button" data-day="' + day.iso + '" aria-label="' + escapeHTML(day.full) + '" aria-pressed="' + String(Boolean(selectedDay && selectedDay.iso === day.iso)) + '">' + escapeHTML(day.label) + "</button>"
+      ).join("") || '<p class="empty-state">Não há datas disponíveis na agenda configurada.</p>';
+      dayRoot.setAttribute("aria-busy", "false");
+    }
+    renderDayButtons();
 
     const timeRoot = $("#booking-times");
-    let bookedTimes = [];
+    let bookedSlots = [];
+    let availabilityReady = false;
+    let availabilityRequest = 0;
+
+    function isTimeUnavailable(time, duration) {
+      if (!availabilityReady) return true;
+      const interval = [15, 30, 60].includes(Number(SHOP_SETTINGS.slotIntervalMinutes))
+        ? Number(SHOP_SETTINGS.slotIntervalMinutes)
+        : 60;
+      const [hours, minutes] = time.split(":").map(Number);
+      const start = hours * 60 + minutes;
+      const blocks = [];
+      for (let minute = start; minute < start + Math.max(interval, duration); minute += interval) {
+        blocks.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
+      }
+      const barberIds = barberSelect.value === "sem-preferencia"
+        ? BARBERS.filter((person) => person.id !== "sem-preferencia" && person.active !== false).map((person) => person.id)
+        : [barberSelect.value];
+      if (!barberIds.length) return true;
+      return barberIds.every((barberId) => blocks.some((block) =>
+        bookedSlots.some((slot) => slot.barberId === barberId && slot.time === block)
+      ));
+    }
 
     function renderTimeButtons() {
-      timeRoot.innerHTML = TIME_SLOTS.map((time) => {
-        const busy = bookedTimes.includes(time);
+      const duration = chosenServices().reduce((sum, service) => sum + Number(service.duration || 0), 0);
+      const times = timeSlotsForDuration(duration);
+      if (selectedTime && !times.includes(selectedTime)) selectedTime = null;
+      if (!selectedDay) {
+        timeRoot.innerHTML = '<p class="empty-state">Selecione uma data para consultar os horários.</p>';
+        timeRoot.setAttribute("aria-busy", "false");
+        return;
+      }
+      if (!fb() || !availabilityReady) {
+        timeRoot.innerHTML = '<p class="empty-state">Os horários serão exibidos quando a agenda puder ser consultada.</p>';
+        timeRoot.setAttribute("aria-busy", String(Boolean(fb())));
+        return;
+      }
+      timeRoot.innerHTML = times.map((time) => {
+        const busy = isTimeUnavailable(time, duration);
         const pressed = !busy && selectedTime === time;
         return '<button type="button" class="choice-button" data-time="' + time + '" aria-pressed="' + String(pressed) + '"' + (busy ? " disabled" : "") + ">" + time + "</button>";
-      }).join("");
+      }).join("") || '<p class="empty-state">Não há horários que comportem os serviços selecionados.</p>';
       timeRoot.setAttribute("aria-busy", "false");
     }
     renderTimeButtons();
 
     async function refreshAvailability() {
+      const requestId = ++availabilityRequest;
       if (!selectedDay || !fb()) {
-        bookedTimes = [];
+        bookedSlots = [];
+        availabilityReady = false;
         renderTimeButtons();
         return;
       }
+      availabilityReady = false;
+      renderTimeButtons();
       try {
-        bookedTimes = await fb().getBookedTimesForDay(selectedDay.iso, barberSelect.value);
-        if (selectedTime && bookedTimes.includes(selectedTime)) {
+        const dateIso = selectedDay.iso;
+        const barberId = barberSelect.value;
+        const result = await fb().getBookedTimesForDay(dateIso, barberId);
+        if (requestId !== availabilityRequest) return;
+        const priorSelectedTime = selectedTime;
+        bookedSlots = result;
+        availabilityReady = true;
+        renderTimeButtons();
+        if (priorSelectedTime && selectedTime && isTimeUnavailable(selectedTime, chosenServices().reduce((sum, service) => sum + Number(service.duration || 0), 0))) {
           selectedTime = null;
+          persistBooking();
+          updateSummary();
+        } else if (priorSelectedTime && !selectedTime) {
+          persistBooking();
           updateSummary();
         }
+      } catch (_) {
+        if (requestId !== availabilityRequest) return;
+        availabilityReady = false;
         renderTimeButtons();
-      } catch (_) {}
+      }
     }
+
+    window.addEventListener("castellari:schedule-updated", () => {
+      const previousIso = selectedDay && selectedDay.iso;
+      days = upcomingDays();
+      selectedDay = days.find((day) => day.iso === previousIso) || null;
+      if (!selectedDay) selectedTime = null;
+      renderDayButtons();
+      renderTimeButtons();
+      persistBooking();
+      updateSummary();
+      refreshAvailability();
+    });
 
     const persistBooking = () => {
       writeStorageJSON(BOOKING_STORAGE_KEY, {
@@ -829,6 +921,7 @@
       clearBookingAlert();
       updateSelectedCount();
       renderSelectedChips();
+      renderTimeButtons();
       persistBooking();
       updateSummary();
     });
@@ -841,6 +934,7 @@
         updateSelectedCount();
         renderSelectedChips();
         renderServiceList();
+        renderTimeButtons();
         persistBooking();
         updateSummary();
       });
@@ -884,6 +978,7 @@
       renderBarbersGrid();
       persistBooking();
       updateSummary();
+      renderTimeButtons();
       refreshAvailability();
     });
     $("#client-name").addEventListener("input", () => {
@@ -934,6 +1029,7 @@
       renderSelectedChips();
       populateBarberSelect(barberSelect.value);
       renderBarbersGrid();
+      renderTimeButtons();
       updateSummary();
     });
 
@@ -970,6 +1066,12 @@
         return;
       }
 
+      if (!fb()) {
+        $("#booking-error").hidden = false;
+        $("#booking-error").textContent = "O agendamento está temporariamente indisponível. Tente novamente mais tarde ou fale com a barbearia.";
+        return;
+      }
+
       if (fb() && !currentUser) {
         $("#booking-error").hidden = false;
         $("#booking-error").textContent = "Entre com sua conta Google ou e-mail para confirmar o agendamento e salvar no seu histórico.";
@@ -979,8 +1081,9 @@
 
       const barber = BARBERS.find((person) => person.id === barberSelect.value);
       const chosen = chosenServices();
-      const totalPrice = chosen.reduce((sum, service) => sum + service.price, 0);
+      let totalPrice = chosen.reduce((sum, service) => sum + service.price, 0);
       const totalDuration = chosen.reduce((sum, service) => sum + service.duration, 0);
+      let assignedBarber = barber;
       const submitBtn = $(".submit-booking", form);
 
       if (fb() && currentUser) {
@@ -992,9 +1095,7 @@
           const result = await fb().createBooking({
             user: currentUser,
             serviceIds: chosen.map((s) => s.id),
-            serviceNames: chosen.map((s) => s.name),
             barberId: barberSelect.value,
-            barberName: barber ? barber.name : "Sem preferência",
             dateIso: selectedDay.iso,
             dateFull: selectedDay.full,
             time: selectedTime,
@@ -1003,6 +1104,11 @@
             clientName: $("#client-name").value,
             clientPhone: phoneInput.value,
           });
+          totalPrice = Number(result.totalPrice);
+          assignedBarber = BARBERS.find((person) => person.id === result.barberId) || {
+            id: result.barberId,
+            name: result.barberName || "Profissional",
+          };
           const codeEl = $("#success-code");
           if (codeEl) codeEl.textContent = "Código da reserva: " + result.code + ". Acompanhe em Minha Conta.";
         } catch (err) {
@@ -1020,13 +1126,13 @@
       $("#success-name").textContent = $("#client-name").value.trim().split(/\s+/)[0];
       $("#success-services").textContent = chosen.map((service) => service.name).join(", ");
       $("#success-date").textContent = selectedDay.full + " às " + selectedTime;
-      $("#success-professional").textContent = barber ? barber.name : "Sem preferência";
+      $("#success-professional").textContent = assignedBarber ? assignedBarber.name : "Sem preferência";
       $("#success-total").textContent = money(totalPrice);
 
       const whatsBtn = $("#success-whatsapp-btn");
       if (whatsBtn) {
         const clientFirstName = $("#client-name").value.trim();
-        const barberText = barber ? barber.name : "Primeiro disponível";
+        const barberText = assignedBarber ? assignedBarber.name : "Primeiro disponível";
         const servText = chosen.map((s) => s.name).join(", ");
         const whatsMsg = `Olá, Barbearia Castellari! Fiz um agendamento pelo site:\n\n👤 *Cliente:* ${clientFirstName}\n✂️ *Serviço(s):* ${servText}\n💈 *Profissional:* ${barberText}\n📅 *Data:* ${selectedDay.full} às ${selectedTime}\n💰 *Valor estimado:* ${money(totalPrice)}\n\nAguardo confirmação!`;
         whatsBtn.href = "https://wa.me/559285803578?text=" + encodeURIComponent(whatsMsg);
@@ -1083,19 +1189,43 @@
 
     const remote = await api.loadCatalogFromFirestore();
     let updated = false;
+    if (remote.settings) {
+      const openDays = Array.isArray(remote.settings.openDays)
+        ? remote.settings.openDays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+        : SHOP_SETTINGS.openDays;
+      SHOP_SETTINGS = {
+        openingTime: remote.settings.openingTime || SHOP_SETTINGS.openingTime,
+        closingTime: remote.settings.closingTime || SHOP_SETTINGS.closingTime,
+        openDays: openDays.length ? openDays : SHOP_SETTINGS.openDays,
+        slotIntervalMinutes: Number(remote.settings.slotIntervalMinutes || SHOP_SETTINGS.slotIntervalMinutes),
+      };
+      document.querySelectorAll("[data-shop-name]").forEach((node) => {
+        node.textContent = String(remote.settings.name || "Barbearia Castellari").toLocaleUpperCase("pt-BR");
+      });
+      document.querySelectorAll("[data-shop-unit]").forEach((node) => {
+        node.textContent = remote.settings.unit || node.textContent;
+      });
+      document.querySelectorAll("[data-shop-days]").forEach((node) => {
+        node.textContent = remote.settings.days || node.textContent;
+      });
+      document.querySelectorAll("[data-shop-hours]").forEach((node) => {
+        node.textContent = remote.settings.hours || node.textContent;
+      });
+      window.dispatchEvent(new CustomEvent("castellari:schedule-updated"));
+    }
     const remoteVersion = remote.settings && remote.settings.catalogVersion ? Number(remote.settings.catalogVersion) : 1;
     const localVersion = Number(data.CATALOG_VERSION || 1);
     if (remote.services && remoteVersion >= localVersion) {
-      SERVICES = remote.services;
+      SERVICES = remote.services.filter((service) => service.active !== false);
       CATEGORIES = [...new Set(SERVICES.map((service) => service.category))];
       updated = true;
     }
     if (remote.plans && remoteVersion >= localVersion) {
-      PLANS = remote.plans;
+      PLANS = remote.plans.filter((plan) => plan.active !== false);
       updated = true;
     }
     if (remote.barbers) {
-      BARBERS = remote.barbers.map((rb) => {
+      BARBERS = remote.barbers.filter((barber) => barber.active !== false).map((rb) => {
         const local = (data.BARBERS || []).find((lb) => lb.id === rb.id);
         return {
           ...rb,

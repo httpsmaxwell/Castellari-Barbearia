@@ -21,9 +21,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <script>try{if(localStorage.getItem('castellari-theme')==='dark'){document.documentElement.dataset.theme='dark';var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111b16';}}catch(e){}</script>
   <link rel="stylesheet" href="castellari.css?v=6">
-  <script src="castellari-data.js?v=6" defer></script>
-  <script type="module" src="castellari-firebase.js?v=6"></script>
-  <script src="castellari.js?v=6" defer></script>
+  <script src="castellari-data.js?v=7" defer></script>
+  <script type="module" src="castellari-firebase.js?v=7"></script>
+  <script src="castellari.js?v=7" defer></script>
 </head>
 <body data-page="home">
 <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -31,7 +31,7 @@
   <div class="container header-row">
     <a class="brand" href="index.html" aria-label="Barbearia Castellari — início">
       <span class="brand-mark" aria-hidden="true"><span>C</span></span>
-      <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
+      <span><span class="brand-name" data-shop-name>BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
     </a>
     <nav class="primary-nav" aria-label="Navegação principal">
       <a data-nav="home" href="index.html">Início</a>
@@ -90,16 +90,16 @@
       <div class="footer-brand">
         <a class="brand" href="index.html">
           <span class="brand-mark" aria-hidden="true"><span>C</span></span>
-          <span><span class="brand-name">BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
+          <span><span class="brand-name" data-shop-name>BARBEARIA CASTELLARI</span><span class="brand-tag">Classic Italian</span></span>
         </a>
         <p class="footer-intro">Um espaço de cuidado pessoal inspirado na tradição clássica italiana e feito para a vida de hoje.</p>
       </div>
       <div>
-        <p class="footer-heading">Unidade Planalto</p>
+        <p class="footer-heading">Unidade</p>
         <div class="footer-links">
           <span>Av. Desembargador João Machado, 15B</span>
-          <span>Planalto · Manaus, AM — CEP 69044-000</span>
-          <span>Segunda a sábado · 09h às 20h</span>
+          <span data-shop-unit>Planalto · Manaus, AM — CEP 69044-000</span>
+          <span><span data-shop-days>Segunda a sábado</span> · <span data-shop-hours>09h às 20h</span></span>
           <a href="https://wa.me/559285803578" target="_blank" rel="noopener">WhatsApp: (92) 8580-3578</a>
           <a href="https://instagram.com/castellaribarbearia" target="_blank" rel="noopener">Instagram: @castellaribarbearia</a>
         </div>
